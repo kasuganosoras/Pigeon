@@ -135,7 +135,7 @@ if(!$conn) {
 	$email = mysqli_real_escape_string($conn, $admin_mail);
 	$registe_ip = mysqli_real_escape_string($conn, "127.0.0.1");
 	$token = md5(sha1($username . $password . $email . mt_rand(0, 99999999) . time()));
-	mysqli_query($pigeon->conn, "INSERT INTO `users` (
+	mysqli_query($conn, "INSERT INTO `users` (
 		`id`,
 		`username`,
 		`password`,
