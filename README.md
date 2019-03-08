@@ -32,7 +32,14 @@
 git clone https://github.com/kasuganosoras/Pigeon
 ```
 
-然后修改 `Pigeon/pigeon/config.php`，根据注释内容进行配置即可。
+然后
+
+```
+cd Pigeon/
+php install.php
+```
+
+根据提示进行配置即可。
 
 ## 开源协议
 
