@@ -207,13 +207,13 @@ global $pigeon;
 					if(auto_refresh) {
 						RefreshHome();
 					}
-					$('.message img').click(function() {
-						imgsrc.src = this.src;
-						$("#imgscan").fadeIn();
-					});
 				}, 10000);
 				$('pre code').each(function(i, block) {
 					hljs.highlightBlock(block);
+				});
+				$('.message img').click(function() {
+					imgsrc.src = this.src;
+					$("#imgscan").fadeIn();
 				});
 			}
 			window.onblur = function() {
