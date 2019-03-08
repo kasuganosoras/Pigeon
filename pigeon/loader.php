@@ -1,8 +1,11 @@
 <?php
 SESSION_START();
+// 加载函数库
 include(ROOT . "/pigeon/function.php");
 include(ROOT . "/pigeon/parsedown.php");
+// 实例化 Pigeon
 $pigeon = new Pigeon();
+// 判断传入参数 s
 if(isset($_GET['s'])) {
 	switch($_GET['s']) {
 		case 'timeline':
@@ -14,7 +17,7 @@ if(isset($_GET['s'])) {
 				}
 				$pigeon->isLogin = (isset($_SESSION['user']) && $_SESSION['user'] !== '');
 				$pigeon->isAjax = (isset($_GET['ajax']) && $_GET['ajax'] == '1');
-				if(isset($_GET['user'])) {
+				if(isset($_GET['user']) && preg_match("/^[A-Za-z0-9\_\-]{0,32}$/", $_GET['user'])) {
 					$pigeon->getTimeline($_GET['user'], true, Intval($_GET['page']));
 				} else {
 					$pigeon->getTimeline(null, true, Intval($_GET['page']));
@@ -304,6 +307,7 @@ if(isset($_GET['s'])) {
 			break;
 	}
 } else {
+	// 默认首页
 	$pigeon->before = time();
 	if(isset($_GET['time']) && preg_match("/^[0-9\:\- ]+$/", $_GET['time'])) {
 		$beforeTime = strtotime($_GET['time']);
@@ -312,6 +316,10 @@ if(isset($_GET['s'])) {
 	$pigeon->isAjax = false;
 	$pigeon->isLogin = (isset($_SESSION['user']) && $_SESSION['user'] !== '');
 	$pigeon->getTemplate("header");
-	$pigeon->getTimeline(null, true, 1);
+	if(isset($_GET['user']) && preg_match("/^[A-Za-z0-9\_\-]{0,32}$/", $_GET['user'])) {
+		$pigeon->getTimeline($_GET['user'], true, 1);
+	} else {
+		$pigeon->getTimeline(null, true, 1);
+	}
 	$pigeon->getTemplate("footer");
 }

@@ -5,6 +5,11 @@ class Pigeon {
 	public $writeToCache;
 	public $publicMode = true;
 	
+	/**
+	 *
+	 *	构造函数，初始化 MySQL 连接
+	 *
+	 */
 	public function __construct() {
 		if(!file_exists(ROOT . "/pigeon/config.php")) {
 			$this->Exception("Configure file not found");
@@ -21,6 +26,11 @@ class Pigeon {
 		}
 	}
 	
+	/**
+	 *
+	 *	reCaptcha 验证函数
+	 *
+	 */
 	public function recaptcha_verify($userdata) {
 		if($this->config['recaptcha_key_post'] == '') {
 			return true;
@@ -46,6 +56,11 @@ class Pigeon {
 		return $json ? $json['success'] : false;
 	}
 	
+	/**
+	 *
+	 *	读取网站模板
+	 *
+	 */
 	public function getTemplate($name) {
 		if(file_exists(ROOT . "/pigeon/template/{$this->config['template']}/{$name}.php")) {
 			include(ROOT . "/pigeon/template/{$this->config['template']}/{$name}.php");
@@ -54,6 +69,11 @@ class Pigeon {
 		}
 	}
 	
+	/**
+	 *
+	 *	读取用户时间线
+	 *
+	 */
 	public function getTimeline($username, $displayHtml = true, $page = 1) {
 		if(!$this->conn) {
 			return;
@@ -67,15 +87,12 @@ class Pigeon {
 				$enable_foruser = false;
 			}
 		}
-		
 		$Markdown->setBreaksEnabled(true);
 		$spage = ($page - 1) * 10;
-		if($username !== null) {
-			//$public = $this->publicMode ? " AND `public`='true'" : "";
+		if(!empty($username)) {
 			$username = mysqli_real_escape_string($this->conn, $username);
 			$rs = mysqli_query($this->conn, "SELECT * FROM `posts` WHERE `author`='{$username}' AND time <= {$this->before} ORDER BY `id` DESC LIMIT {$spage},10");
 		} else {
-			//$public = $this->publicMode ? " WHERE `public`='true'" : "";
 			$rs = mysqli_query($this->conn, "SELECT * FROM `posts` WHERE time <= {$this->before} ORDER BY `id` DESC LIMIT {$spage},10");
 		}
 		if($displayHtml) {
@@ -102,13 +119,15 @@ class Pigeon {
 				$html .= "<p>" . $Markdown->text($rw[1]) . "</p></td></tr>";
 				$i++;
 			}
+			// 莫名其妙的 bug，未登录用户的循环次数会比已登录的用户少 1 次
+			$pagesplit = $this->isLogin ? 10 : 9;
 			if($i == 0) {
 				if(!$this->isAjax) {
 					$html .= "</table><p>这是一只寂寞的鸽子，暂时没有人咕咕咕！</p>";
 				} else {
 					$this->Exception("<center><p>已经到底啦~</p></center>");
 				}
-			} elseif($i < 10) {
+			} elseif($i < $pagesplit) {
 				$html .= "</table><center><p>已经到底啦~</p></center>";
 			} else {
 				$html .= "</table><center class='loadMore'><p style='cursor: pointer;' onclick='loadMore()'>加载更多</p></center>";
@@ -119,6 +138,11 @@ class Pigeon {
 		}
 	}
 	
+	/**
+	 *
+	 *	获取指定用户信息
+	 *
+	 */
 	private function getUserInfo($username) {
 		if(!$this->conn) {
 			return false;
@@ -135,6 +159,11 @@ class Pigeon {
 		return false;
 	}
 	
+	/**
+	 *
+	 *	判断是否是管理员权限
+	 *
+	 */
 	public function isAdmin($username) {
 		if(!$this->conn) {
 			return false;
@@ -147,6 +176,11 @@ class Pigeon {
 		return $rs ? ($rs['permission'] == 'root' || $rs['permission'] == 'admin') : false;
 	}
 	
+	/**
+	 *
+	 *	发送邮件函数
+	 *
+	 */
 	public function sendMail($mailto, $mailsub, $mailbd) {
 		include(ROOT . "/pigeon/smtp.php");
 		$smtpemailto = $mailto;
@@ -158,6 +192,11 @@ class Pigeon {
 		$smtp->sendmail($smtpemailto, $this->config['smtp']['name'], $mailsubject, $mailbody, $mailtype);
 	}
 	
+	/**
+	 *
+	 *	获取格式化的日期
+	 *
+	 */
 	private function getDateFormat($time) {
 		$nowTime = time();
 		if(($nowTime - $time) <= 10) {
@@ -175,6 +214,11 @@ class Pigeon {
 		}
 	}
 	
+	/**
+	 *
+	 *	写出内容
+	 *
+	 */
 	public function write($data) {
 		if($this->writeToCache) {
 			$this->cacheData .= $data;
@@ -183,6 +227,11 @@ class Pigeon {
 		}
 	}
 	
+	/**
+	 *
+	 *	写出内容（带换行）
+	 *
+	 */
 	public function writeln($data) {
 		if($this->writeToCache) {
 			$this->cacheData .= $data . "\n";
@@ -191,12 +240,22 @@ class Pigeon {
 		}
 	}
 	
+	/**
+	 *
+	 *	抛出异常
+	 *
+	 */
 	public function Exception($error) {
 		$this->sendHeader(404);
 		$this->write($error);
 		exit;
 	}
 	
+	/**
+	 *
+	 *	发送 Header
+	 *
+	 */
 	public function sendHeader($statusCode) {
 		if(preg_match("/^[0-9]{0,3}$/", $statusCode) || is_integer($statusCode)) {
 			Header("Software: pigeon", true, $statusCode);

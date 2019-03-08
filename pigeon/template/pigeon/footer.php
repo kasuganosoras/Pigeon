@@ -50,6 +50,7 @@ global $pigeon;
 		<script type="text/javascript">
 			var auto_refresh = true;
 			var ptime = '';
+			var puser = "<?php $user = isset($_GET['user']) ? $_GET['user'] : ""; echo str_replace('"', "", $user); ?>";
 			function setTime() {
 				ptime = $("#time").val();
 				RefreshHome();
@@ -79,7 +80,7 @@ global $pigeon;
 				auto_refresh = true;
 				var htmlobj = $.ajax({
 					type: 'GET',
-					url: "?s=timeline&page=1&time=" + ptime,
+					url: "?s=timeline&page=1&time=" + ptime + "&user=" + puser,
 					async:true,
 					error: function() {
 						alert("错误：" + htmlobj.responseText);
@@ -96,7 +97,7 @@ global $pigeon;
 				var newPage = parseInt(current_page) + 1;
 				var htmlobj = $.ajax({
 					type: 'GET',
-					url: "?s=timeline&ajax=1&page=" + newPage + "&time=" + ptime,
+					url: "?s=timeline&ajax=1&page=" + newPage + "&time=" + ptime + "&user=" + puser,
 					async:true,
 					error: function() {
 						return;

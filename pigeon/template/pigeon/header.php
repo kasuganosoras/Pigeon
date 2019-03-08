@@ -73,6 +73,9 @@ global $pigeon;
 						</tr>
 					</table>
 					<hr>
+					<center>
+						<p><a href="?">公共时间线</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="?user=<?php echo $_SESSION['user']; ?>">我的时间线</a></p>
+					</center>
 					<?php
 					}
 					?>
