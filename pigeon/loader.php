@@ -11,9 +11,13 @@ if(isset($_GET['s'])) {
 		case 'timeline':
 			if(isset($_GET['page']) && preg_match("/^[0-9]{0,6}$/", $_GET['page'])) {
 				$pigeon->before = null;
+				$pigeon->search = null;
 				if(isset($_GET['time']) && preg_match("/^[0-9\:\- ]+$/", $_GET['time'])) {
 					$beforeTime = strtotime($_GET['time']);
 					$pigeon->before = $beforeTime ? $beforeTime : null;
+				}
+				if(isset($_GET['search']) && $_GET['search'] !== '') {
+					$pigeon->search = mysqli_real_escape_string($pigeon->conn, $_GET['search']);
 				}
 				$pigeon->isLogin = (isset($_SESSION['user']) && $_SESSION['user'] !== '');
 				$pigeon->isAjax = (isset($_GET['ajax']) && $_GET['ajax'] == '1');
@@ -340,9 +344,13 @@ if(isset($_GET['s'])) {
 } else {
 	// 默认首页
 	$pigeon->before = null;
+	$pigeon->search = null;
 	if(isset($_GET['time']) && preg_match("/^[0-9\:\- ]+$/", $_GET['time'])) {
 		$beforeTime = strtotime($_GET['time']);
 		$pigeon->before = $beforeTime ? $beforeTime : null;
+	}
+	if(isset($_GET['search']) && $_GET['search'] !== '') {
+		$pigeon->search = mysqli_real_escape_string($pigeon->conn, $_GET['search']);
 	}
 	$pigeon->isAjax = false;
 	$pigeon->isLogin = (isset($_SESSION['user']) && $_SESSION['user'] !== '');

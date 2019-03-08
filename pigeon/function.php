@@ -81,18 +81,15 @@ class Pigeon {
 		$Markdown = new Parsedown();
 		$Markdown->setBreaksEnabled(false);
 		$spage = ($page - 1) * 10;
-		if($this->before !== null) {
-			$beforesql = " AND time <= {$this->before}";
-			$beforesql_2 = " WHERE time <= {$this->before}";
-		} else {
-			$beforesql = "";
-			$beforesql_2 = '';
-		}
+		$beforesql = $this->before ? " AND time <= {$this->before}" : "";
+		$beforesql_2 = $this->before ? " WHERE time <= {$this->before}" : "";
+		$searchsql = $this->search ? " AND POSITION('{$this->search}' IN `content`) OR POSITION('{$this->search}' IN `author`)" : "";
+		$searchsql_2 = $this->search ? " WHERE POSITION('{$this->search}' IN `content`) OR POSITION('{$this->search}' IN `author`)" : "";
 		if(!empty($username)) {
 			$username = mysqli_real_escape_string($this->conn, $username);
-			$rs = mysqli_query($this->conn, "SELECT * FROM `posts` WHERE `author`='{$username}'{$beforesql} ORDER BY `id` DESC LIMIT {$spage},10");
+			$rs = mysqli_query($this->conn, "SELECT * FROM `posts` WHERE `author`='{$username}'{$beforesql}{$searchsql} ORDER BY `id` DESC LIMIT {$spage},10");
 		} else {
-			$rs = mysqli_query($this->conn, "SELECT * FROM `posts` {$beforesql_2} ORDER BY `id` DESC LIMIT {$spage},10");
+			$rs = mysqli_query($this->conn, "SELECT * FROM `posts` {$beforesql_2}{$searchsql_2} ORDER BY `id` DESC LIMIT {$spage},10");
 		}
 		if($displayHtml) {
 			$i = 0;

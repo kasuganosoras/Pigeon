@@ -3,6 +3,14 @@ global $pigeon;
 ?>
 				</div>
 				<div class="col-sm-3">
+					<p>
+						<div class="input-group">
+							<input type="text" id="search" class="form-control" placeholder="搜索">
+							<span class="input-group-btn">
+								<button class="btn btn-primary" onclick="search()" style="height: 34px;"><i class="fa fa-search"></i></button>
+							</span>
+						</div>
+					</p>
 					<?php
 					if(isset($_SESSION['user']) && isset($_SESSION['email'])) {
 						?>
@@ -35,7 +43,7 @@ global $pigeon;
 						<div class="input-group">
 							<input type="text" id="time" class="form-control">
 							<span class="input-group-btn">
-								<button class="btn btn-primary" onclick="setTime()">确定</button>
+								<button class="btn btn-primary" placeholder="yyyy-mm-dd HH:ii:ss" onclick="setTime()">确定</button>
 							</span>
 						</div>
 					</p>
@@ -50,6 +58,7 @@ global $pigeon;
 		<script type="text/javascript">
 			var auto_refresh = true;
 			var ptime = '';
+			var psearch = '';
 			var puser = "<?php $user = isset($_GET['user']) ? $_GET['user'] : ""; echo str_replace('"', "", $user); ?>";
 			var storage = '';
 			var dismiss = '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
@@ -58,6 +67,10 @@ global $pigeon;
 			hljs.initHighlightingOnLoad();
 			function setTime() {
 				ptime = $("#time").val();
+				RefreshHome();
+			}
+			function search() {
+				psearch = $("#search").val();
 				RefreshHome();
 			}
 			function newpost() {
@@ -85,7 +98,13 @@ global $pigeon;
 				auto_refresh = true;
 				var htmlobj = $.ajax({
 					type: 'GET',
-					url: "?s=timeline&page=1&time=" + ptime + "&user=" + puser,
+					url: "?s=timeline",
+					data: {
+						page: '1',
+						time: ptime,
+						user: puser,
+						search: psearch
+					},
 					async:true,
 					error: function() {
 						alert("错误：" + htmlobj.responseText);
@@ -112,7 +131,14 @@ global $pigeon;
 				var newPage = parseInt(current_page) + 1;
 				var htmlobj = $.ajax({
 					type: 'GET',
-					url: "?s=timeline&ajax=1&page=" + newPage + "&time=" + ptime + "&user=" + puser,
+					url: "?s=timeline",
+					data: {
+						ajax: 1,
+						page: newPage,
+						time: ptime,
+						user: puser,
+						search: psearch
+					},
 					async:true,
 					error: function() {
 						return;
