@@ -51,6 +51,7 @@ global $pigeon;
 			var auto_refresh = true;
 			var ptime = '';
 			var puser = "<?php $user = isset($_GET['user']) ? $_GET['user'] : ""; echo str_replace('"', "", $user); ?>";
+			var storage = '';
 			function setTime() {
 				ptime = $("#time").val();
 				RefreshHome();
@@ -87,7 +88,11 @@ global $pigeon;
 						return;
 					},
 					success: function() {
-						$("#pagecontent").html(htmlobj.responseText);
+						var ids = htmlobj.getResponseHeader('ids');
+						if(storage != ids) {
+							$("#pagecontent").html(htmlobj.responseText);
+							storage = ids;
+						}
 						return;
 					}
 				});
@@ -103,9 +108,9 @@ global $pigeon;
 						return;
 					},
 					success: function() {
+						$(".loadMore").css({display:'none'});
 						$("#pagecontent").append(htmlobj.responseText);
 						current_page = newPage;
-						$(".loadMore").css({display:'none'});
 						return;
 					}
 				});

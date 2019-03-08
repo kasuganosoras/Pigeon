@@ -78,62 +78,72 @@ class Pigeon {
 		if(!$this->conn) {
 			return;
 		}
-		$enable_foruser = true;
 		$Markdown = new Parsedown();
-		if($this->config['enable_safemode']) {
-			if($this->config['enable_foruser']) {
-				$enable_foruser = true;
-			} else {
-				$enable_foruser = false;
-			}
-		}
 		$Markdown->setBreaksEnabled(true);
 		$spage = ($page - 1) * 10;
+		if($this->before !== null) {
+			$beforesql = " AND time <= {$this->before}";
+			$beforesql_2 = " WHERE time <= {$this->before}";
+		} else {
+			$beforesql = "";
+			$beforesql_2 = '';
+		}
 		if(!empty($username)) {
 			$username = mysqli_real_escape_string($this->conn, $username);
-			$rs = mysqli_query($this->conn, "SELECT * FROM `posts` WHERE `author`='{$username}' AND time <= {$this->before} ORDER BY `id` DESC LIMIT {$spage},10");
+			$rs = mysqli_query($this->conn, "SELECT * FROM `posts` WHERE `author`='{$username}'{$beforesql} ORDER BY `id` DESC LIMIT {$spage},10");
 		} else {
-			$rs = mysqli_query($this->conn, "SELECT * FROM `posts` WHERE time <= {$this->before} ORDER BY `id` DESC LIMIT {$spage},10");
+			$rs = mysqli_query($this->conn, "SELECT * FROM `posts` {$beforesql_2} ORDER BY `id` DESC LIMIT {$spage},10");
 		}
 		if($displayHtml) {
 			$i = 0;
 			$delete = "";
+			$ids = "";
 			$html = "<div id='pagecontent'><table style='width: 100%;'>";
 			if(isset($_SESSION['user']) && $this->isAdmin($_SESSION['user'])) {
 				$delete = "&nbsp;&nbsp;|&nbsp;&nbsp;<span style='cursor: pointer;' onclick='deletepost({id})'>删除</span>";
 			}
+			$loginUser = isset($_SESSION['user']) ? $_SESSION['user'] : "";
+			$isAdmin = $this->isAdmin($loginUser);
 			while($rw = mysqli_fetch_row($rs)) {
-				if($this->isAdmin($rw[2])) {
-					$Markdown->setSafeMode(false);
-				} else {
-					$Markdown->setSafeMode(true);
+				$ids .= "{$rw[0]},";
+				$i++;
+				if($this->config['enable_safemode']) {
+					if($this->config['enable_foruser']) {
+						if($this->isAdmin($rw[2])) {
+							$Markdown->setSafeMode(false);
+						} else {
+							$Markdown->setSafeMode(true);
+						}
+					} else {
+						$Markdown->setSafeMode(true);
+					}
 				}
 				if($rw[4] == "1" && !$this->isLogin) {
 					continue;
 				}
-				if($rw[4] == "2" && $_SESSION['user'] !== $rw[2]) {
-					continue;
+				if($rw[4] == "2" && $loginUser !== $rw[2]) {
+					if(!$isAdmin) {
+						continue;
+					}
 				}
 				$pstatus = $rw[4] == '2' ? "&nbsp;&nbsp;<code>仅自己可见</code>" : "";
 				$html .= "<tr><td class='headimg'><img src='https://secure.gravatar.com/avatar/" . md5($this->getUserInfo($rw[2])['email']) . "?s=64'</td><td class='thread'><p>{$rw[2]} 发表于" . $this->getDateFormat($rw[3]) . $pstatus . str_replace("{id}", $rw[0], $delete) . "</p>";
 				$html .= "<p>" . $Markdown->text($rw[1]) . "</p></td></tr>";
-				$i++;
 			}
-			// 莫名其妙的 bug，未登录用户的循环次数会比已登录的用户少 1 次
-			$pagesplit = $this->isLogin ? 10 : 9;
 			if($i == 0) {
 				if(!$this->isAjax) {
 					$html .= "</table><p>这是一只寂寞的鸽子，暂时没有人咕咕咕！</p>";
 				} else {
 					$this->Exception("<center><p>已经到底啦~</p></center>");
 				}
-			} elseif($i < $pagesplit) {
+			} elseif($i <= 9) {
 				$html .= "</table><center><p>已经到底啦~</p></center>";
 			} else {
 				$html .= "</table><center class='loadMore'><p style='cursor: pointer;' onclick='loadMore()'>加载更多</p></center>";
 			}
 			$html .= "<script>var current_page = '{$page}';</script>";
 			$html .= "</div>";
+			Header("ids: {$ids}");
 			echo $html;
 		}
 	}

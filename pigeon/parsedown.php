@@ -470,7 +470,7 @@ class Parsedown
 
         if ($infostring !== '')
         {
-            $Element['attributes'] = array('class' => "$infostring");
+            $Element['attributes'] = array('class' => "language-$infostring");
         }
 
         $Block = array(
@@ -1351,31 +1351,14 @@ class Parsedown
         {
             return;
         }
-		$ImgSrc = $Link['element']['attributes']['href'];
-		if(mb_substr($ImgSrc, 0, 7) !== "http://" && mb_substr($ImgSrc, 0, 8) !== "https://") {
-			if(mb_substr($ImgSrc, 0, 1) !== "/") {
-				$url_target = "/";
-			} else {
-				$url_target = "";
-			}
-			$ImgSrc = "{$this->SERVER_PROTOCTOL}{$this->SERVER_NAME}{$url_target}{$ImgSrc}";
-		}
-		if(!stristr($ImgSrc, "i.natfrp.org") && !stristr($ImgSrc, "www.zerobbs.net") && !stristr($ImgSrc, "frp.tcotp.cn")) {
-			$aeskey = md5("ZeroDream_892356065" . sha1(date("YmdH")));
-			$ImgSrc = $this->aes_encrypt($ImgSrc, substr($aeskey, 0, 16), $aeskey);
-			$ImgSrc = "https://i.natfrp.org/proxy/?data=" . urlencode($ImgSrc);
-		}
-		//https://i.natfrp.org/proxy/?url=
+
         $Inline = array(
             'extent' => $Link['extent'] + 1,
             'element' => array(
                 'name' => 'img',
                 'attributes' => array(
-                    'src' => $ImgSrc,
+                    'src' => $Link['element']['attributes']['href'],
                     'alt' => $Link['element']['handler']['argument'],
-                    'title' => $Link['element']['handler']['argument'],
-					'class' => 'imageload',
-					'data-url' => $ImgSrc,
                 ),
                 'autobreak' => true,
             ),
@@ -1401,7 +1384,6 @@ class Parsedown
             'attributes' => array(
                 'href' => null,
                 'title' => null,
-				'target' => '_blank'
             ),
         );
 
@@ -1498,7 +1480,7 @@ class Parsedown
 
     protected function inlineSpecialCharacter($Excerpt)
     {
-        if ($Excerpt['text'][1] !== ' ' and strpos($Excerpt['text'], ';') !== false
+        if (substr($Excerpt['text'], 1, 1) !== ' ' and strpos($Excerpt['text'], ';') !== false
             and preg_match('/^&(#?+[0-9a-zA-Z]++);/', $Excerpt['text'], $matches)
         ) {
             return array(
@@ -1553,7 +1535,6 @@ class Parsedown
                     'text' => $url,
                     'attributes' => array(
                         'href' => $url,
-						'target' => '_blank'
                     ),
                 ),
             );
@@ -1575,7 +1556,6 @@ class Parsedown
                     'text' => $url,
                     'attributes' => array(
                         'href' => $url,
-						'target' => '_blank'
                     ),
                 ),
             );
@@ -1866,7 +1846,7 @@ class Parsedown
 
     protected function sanitiseElement(array $Element)
     {
-        static $goodAttribute = '/^[a-zA-Z0-9_-\x7f-\xff ][a-zA-Z0-9-_ ]*+$/';
+        static $goodAttribute = '/^[a-zA-Z0-9][a-zA-Z0-9-_]*+$/';
         static $safeUrlNameToAtt  = array(
             'a'   => 'href',
             'img' => 'src',
@@ -1997,25 +1977,4 @@ class Parsedown
                    'var', 'span',
                    'wbr', 'time',
     );
-	
-	protected function aes_encrypt($str, $localIV, $encryptKey) {
-        return openssl_encrypt($str, 'AES-256-CFB', $encryptKey, 0, $localIV);
-    }
-	
-	protected function is_https() {
-		if(!isset($_SERVER['HTTPS'])) {
-			return false;
-		}
-		if($_SERVER['HTTPS'] === 1) {
-			return true;
-		} elseif($_SERVER['HTTPS'] === 'on') {
-			return true;
-		} elseif($_SERVER['SERVER_PORT'] == 443) {
-			return true;
-		}
-		return false;
-	}
-	
-	public $SERVER_NAME = "";
-	public $SERVER_PROTOCTOL = "https://";
 }
