@@ -130,7 +130,6 @@ class Pigeon {
 			}
 			if($i == 0) {
 				if(!$this->isAjax) {
-					Header("ids: {$ids}");
 					$html .= "</table><p>这是一只寂寞的鸽子，暂时没有人咕咕咕！</p>";
 				} else {
 					$this->Exception("<center><p>已经到底啦~</p></center>");
@@ -142,6 +141,8 @@ class Pigeon {
 			}
 			$html .= "<script>var current_page = '{$page}';</script>";
 			$html .= "</div>";
+			@Header("ids: {$ids}");
+			$_SESSION['ids'] = $ids;
 			echo $html;
 		}
 	}

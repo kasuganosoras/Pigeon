@@ -1,5 +1,5 @@
 <?php
-global $pigeon, $ids;
+global $pigeon;
 ?>
 				</div>
 				<div class="col-sm-3">
@@ -60,7 +60,7 @@ global $pigeon, $ids;
 			var ptime = '';
 			var psearch = '';
 			var puser = "<?php $user = isset($_GET['user']) ? $_GET['user'] : ""; echo str_replace('"', "", $user); ?>";
-			var storage = '<?php echo $ids; ?>';
+			var storage = '<?php echo $_SESSION['ids']; ?>';
 			var dismiss = '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
 			var isblur = false;
 			var pagetitle = document.title;
@@ -121,6 +121,10 @@ global $pigeon, $ids;
 							$('pre code').each(function(i, block) {
 								hljs.highlightBlock(block);
 							});
+							$('.message img').click(function() {
+								imgsrc.src = this.src;
+								$("#imgscan").fadeIn();
+							});
 						}
 						return;
 					}
@@ -147,6 +151,10 @@ global $pigeon, $ids;
 						$(".loadMore").css({display:'none'});
 						$("#pagecontent").append(htmlobj.responseText);
 						current_page = newPage;
+						$('.message img').click(function() {
+							imgsrc.src = this.src;
+							$("#imgscan").fadeIn();
+						});
 						return;
 					}
 				});
@@ -199,6 +207,10 @@ global $pigeon, $ids;
 					if(auto_refresh) {
 						RefreshHome();
 					}
+					$('.message img').click(function() {
+						imgsrc.src = this.src;
+						$("#imgscan").fadeIn();
+					});
 				}, 10000);
 				$('pre code').each(function(i, block) {
 					hljs.highlightBlock(block);
