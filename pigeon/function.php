@@ -127,8 +127,8 @@ class Pigeon {
 					}
 				}
 				$pstatus = $rw[4] == '2' ? "&nbsp;&nbsp;<code>仅自己可见</code>" : "";
-				$html .= "<tr><td class='headimg'><img src='https://secure.gravatar.com/avatar/" . md5($this->getUserInfo($rw[2])['email']) . "?s=64'</td><td class='thread'><p>{$rw[2]} 发表于" . $this->getDateFormat($rw[3]) . $pstatus . str_replace("{id}", $rw[0], $delete) . "</p>";
-				$html .= "<p>" . $Markdown->text($rw[1]) . "</p></td></tr>";
+				$html .= "<tr><td class='headimg'><img src='https://secure.gravatar.com/avatar/" . md5($this->getUserInfo($rw[2])['email']) . "?s=64'</td><td class='thread'><p><small>{$rw[2]} 发表于" . $this->getDateFormat($rw[3]) . $pstatus . str_replace("{id}", $rw[0], $delete) . "</small></p>";
+				$html .= "<div class='message'>" . $Markdown->text($rw[1]) . "</div></td></tr>";
 			}
 			if($i == 0) {
 				if(!$this->isAjax) {

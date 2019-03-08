@@ -29,6 +29,12 @@ global $pigeon;
 				height:64px;
 				border-radius:50%;
 			}
+			.headimg img:hover {
+				transform: rotate(360deg);
+				transition-delay: 0.2s;
+				transition-duration: 1s;
+				box-shadow: 0px 0px 16px rgba(0,0,0,0.5);
+			}
 			#pagecontent table {
 				font-size: 14px;
 			}
@@ -40,6 +46,18 @@ global $pigeon;
 				width: 70%;
 				margin-top: 32px;
 				margin-bottom: 32px;
+			}
+			.message {
+				padding: 12px;
+				background-color: #F5F5F5;
+				border-radius: 8px;
+				margin-bottom: 26px;
+				padding-bottom: 2px;
+				display: inline-block;
+			}
+			.message:hover {
+				background-color: #F0F0F0;
+				box-shadow: 0px 0px 16px rgba(0,0,0,0.2);
 			}
 			.newpost{width:100%;height:80px;min-width:100%;max-width:100%;min-height:80px;max-height:256px;}*{transition-duration: 0.5s;}.logo h2 a {color:#000;text-decoration:none;}#mdcontent{display:none;}.thread img{vertical-align:text-bottom ! important;max-width:100% ! important;margin-top:8px;margin-bottom:8px;}.thread table{display:block;width:100%;overflow:auto;margin-bottom:8px;}.thread table tr{background-color:#fff;border-top:1px solid #c6cbd1;}.thread table tr:nth-child(2n){background-color:#f6f8fa;}.thread table th,.thread table td{padding:6px 13px;border:1px solid #dfe2e5;font-size:14px;}.thread pre{margin-bottom:16px;}pre{border:none ! important;}blockquote{font-size:15px ! important;}.thread {word-break: break-all;white-space: pre-wrap;}</style>
 	</head>
