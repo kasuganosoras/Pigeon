@@ -73,8 +73,7 @@ global $pigeon;
 					<?php
 					if(isset($_SESSION['user'])) {
 					?>
-					<p>在想些什么？</p>
-					<p><textarea class="form-control newpost" id="newpost"></textarea></p>
+					<p><textarea class="form-control newpost" placeholder="在想些什么？" id="newpost"></textarea></p>
 					<table style="width: 100%;">
 						<tr>
 							<td style="width: 40%;">
