@@ -1,5 +1,5 @@
 <?php
-global $pigeon;
+global $pigeon, $ids;
 ?>
 				</div>
 				<div class="col-sm-3">
@@ -60,7 +60,7 @@ global $pigeon;
 			var ptime = '';
 			var psearch = '';
 			var puser = "<?php $user = isset($_GET['user']) ? $_GET['user'] : ""; echo str_replace('"', "", $user); ?>";
-			var storage = '';
+			var storage = '<?php echo $ids; ?>';
 			var dismiss = '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
 			var isblur = false;
 			var pagetitle = document.title;
