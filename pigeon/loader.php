@@ -259,6 +259,37 @@ if(isset($_GET['s'])) {
 					$pigeon->Exception("内容不存在。");
 				}
 			}
+			break;
+		case "changepublic":
+			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id']) && preg_match("/^[0-9]{1}$/", $_GET['newstatus'])) {
+				if(!isset($_SESSION['user'])) {
+					if(isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
+						$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
+						$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
+						if($rs) {
+							$_SESSION['user'] = $rs['user'];
+							$_SESSION['email'] = $rs['email'];
+						} else {
+							$pigeon->Exception("Permission denied");
+						}
+					}
+					$pigeon->Exception("请先登录。");
+				}
+				if(!$pigeon->isAdmin($_SESSION['user'])) {
+					$pigeon->Exception("请求被拒绝。");
+				}
+				if($_GET['newstatus'] !== "0" && $_GET['newstatus'] !== "1" && $_GET['newstatus'] !== "2") {
+					$pigeon->Exception("请求被拒绝。");
+				}
+				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `posts` WHERE `id`='{$_GET['id']}'"));
+				if($rs) {
+					mysqli_query($pigeon->conn, "UPDATE `posts` SET `public`='{$_GET['newstatus']}' WHERE `id`='{$_GET['id']}'");
+					echo "Successful";
+				} else {
+					$pigeon->Exception("内容不存在。");
+				}
+			}
+			break;
 		case "resendmail":
 			if(isset($_GET['user']) && preg_match("/^[A-Za-z0-9\_\-]{0,32}$/", $_GET['user'])) {
 				$alert = "danger";

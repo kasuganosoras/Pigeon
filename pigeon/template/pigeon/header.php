@@ -59,6 +59,15 @@ global $pigeon;
 				background-color: #F0F0F0;
 				box-shadow: 0px 0px 16px rgba(0,0,0,0.2);
 			}
+			.hoverdisplay {
+				opacity: 0;
+			}
+			.hoverdisplay:hover {
+				opacity: 1;
+			}
+			#alert_success, #alert_danger {
+				display: none;
+			}
 			.newpost{width:100%;height:80px;min-width:100%;max-width:100%;min-height:80px;max-height:256px;}*{transition-duration: 0.5s;}.logo h2 a {color:#000;text-decoration:none;}#mdcontent{display:none;}.thread img{vertical-align:text-bottom ! important;max-width:100% ! important;margin-top:8px;margin-bottom:8px;}.thread table{display:block;width:100%;overflow:auto;margin-bottom:8px;}.thread table tr{background-color:#fff;border-top:1px solid #c6cbd1;}.thread table tr:nth-child(2n){background-color:#f6f8fa;}.thread table th,.thread table td{padding:6px 13px;border:1px solid #dfe2e5;font-size:14px;}.thread pre{margin-bottom:16px;}pre{border:none ! important;}blockquote{font-size:15px ! important;}.thread {word-break: break-all;white-space: pre-wrap;}</style>
 	</head>
 	<body>
@@ -93,6 +102,8 @@ global $pigeon;
 					<center>
 						<p><a href="?">公共时间线</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="?user=<?php echo $_SESSION['user']; ?>">我的时间线</a></p>
 					</center>
+					<div class="alert alert-success alert-dismissable" id="alert_success"></div>
+					<div class="alert alert-success alert-dismissable" id="alert_danger"></div>
 					<?php
 					}
 					?>

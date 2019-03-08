@@ -100,7 +100,7 @@ class Pigeon {
 			$ids = "";
 			$html = "<div id='pagecontent'><table style='width: 100%;'>";
 			if(isset($_SESSION['user']) && $this->isAdmin($_SESSION['user'])) {
-				$delete = "&nbsp;&nbsp;|&nbsp;&nbsp;<span style='cursor: pointer;' onclick='deletepost({id})'>删除</span>";
+				$delete = "<span class='hoverdisplay'>&nbsp;&nbsp;|&nbsp;&nbsp;<a style='cursor: pointer;' onclick='deletepost({id})'>删除</a>&nbsp;&nbsp;|&nbsp;&nbsp;设置状态 [<a style='cursor: pointer;' onclick='changepublic({id}, 0)'>公开</a> | <a style='cursor: pointer;' onclick='changepublic({id}, 1)'>登录可见</a> | <a style='cursor: pointer;' onclick='changepublic({id}, 2)'>仅作者可见</a>]</span>";
 			}
 			$loginUser = isset($_SESSION['user']) ? $_SESSION['user'] : "";
 			$isAdmin = $this->isAdmin($loginUser);

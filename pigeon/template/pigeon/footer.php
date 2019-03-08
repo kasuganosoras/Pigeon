@@ -52,6 +52,7 @@ global $pigeon;
 			var ptime = '';
 			var puser = "<?php $user = isset($_GET['user']) ? $_GET['user'] : ""; echo str_replace('"', "", $user); ?>";
 			var storage = '';
+			var dismiss = '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
 			function setTime() {
 				ptime = $("#time").val();
 				RefreshHome();
@@ -122,14 +123,41 @@ global $pigeon;
 					url: "?s=deletepost&id=" + id,
 					async:true,
 					error: function() {
-						alert("错误：" + htmlobj.responseText);
+						ErrorMsg("错误：" + htmlobj.responseText);
 						return;
 					},
 					success: function() {
+						storage = '';
+						SuccessMsg("消息删除成功！");
 						RefreshHome();
 						return;
 					}
 				});
+			}
+			function changepublic(id, newstatus) {
+				auto_refresh = false;
+				var htmlobj = $.ajax({
+					type: 'GET',
+					url: "?s=changepublic&id=" + id + "&newstatus=" + newstatus,
+					async:true,
+					error: function() {
+						ErrorMsg("错误：" + htmlobj.responseText);
+						return;
+					},
+					success: function() {
+						SuccessMsg("消息状态修改成功！");
+						RefreshHome();
+						return;
+					}
+				});
+			}
+			function SuccessMsg(text) {
+				$("#alert_success").html(dismiss + text);
+				$("#alert_success").fadeIn(500);
+			}
+			function ErrorMsg(text) {
+				$("#alert_danger").html(dismiss + text);
+				$("#alert_danger").fadeIn(500);
 			}
 			window.onload = function() {
 				setInterval(function() {
