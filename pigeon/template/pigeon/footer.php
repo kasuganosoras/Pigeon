@@ -53,6 +53,8 @@ global $pigeon;
 			var puser = "<?php $user = isset($_GET['user']) ? $_GET['user'] : ""; echo str_replace('"', "", $user); ?>";
 			var storage = '';
 			var dismiss = '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
+			var isblur = false;
+			var pagetitle = document.title;
 			function setTime() {
 				ptime = $("#time").val();
 				RefreshHome();
@@ -92,6 +94,9 @@ global $pigeon;
 						var ids = htmlobj.getResponseHeader('ids');
 						if(storage != ids) {
 							$("#pagecontent").html(htmlobj.responseText);
+							if(isblur && storage != '') {
+								document.title = "[新消息] " + pagetitle;
+							}
 							storage = ids;
 						}
 						return;
@@ -165,6 +170,13 @@ global $pigeon;
 						RefreshHome();
 					}
 				}, 10000);
+			}
+			window.onblur = function() {
+				isblur = true;
+			}
+			window.onfocus = function() {
+				isblur = false;
+				document.title = pagetitle;
 			}
 		</script>
 	</body>
