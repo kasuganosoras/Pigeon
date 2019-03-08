@@ -55,6 +55,7 @@ global $pigeon;
 			var dismiss = '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
 			var isblur = false;
 			var pagetitle = document.title;
+			hljs.initHighlightingOnLoad();
 			function setTime() {
 				ptime = $("#time").val();
 				RefreshHome();
@@ -98,6 +99,9 @@ global $pigeon;
 								document.title = "[新消息] " + pagetitle;
 							}
 							storage = ids;
+							$('pre code').each(function(i, block) {
+								hljs.highlightBlock(block);
+							});
 						}
 						return;
 					}
@@ -170,6 +174,9 @@ global $pigeon;
 						RefreshHome();
 					}
 				}, 10000);
+				$('pre code').each(function(i, block) {
+					hljs.highlightBlock(block);
+				});
 			}
 			window.onblur = function() {
 				isblur = true;
