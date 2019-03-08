@@ -79,7 +79,7 @@ class Pigeon {
 			return;
 		}
 		$Markdown = new Parsedown();
-		$Markdown->setBreaksEnabled(true);
+		$Markdown->setBreaksEnabled(false);
 		$spage = ($page - 1) * 10;
 		if($this->before !== null) {
 			$beforesql = " AND time <= {$this->before}";
