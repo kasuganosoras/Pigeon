@@ -188,6 +188,7 @@ global $pigeon;
 						return;
 					},
 					success: function() {
+						storage = '';
 						SuccessMsg("消息状态修改成功！");
 						RefreshHome();
 						return;
