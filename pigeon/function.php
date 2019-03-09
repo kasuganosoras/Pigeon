@@ -82,15 +82,21 @@ class Pigeon {
 		$Markdown = new Parsedown();
 		$Markdown->setBreaksEnabled(false);
 		$spage = ($page - 1) * 10;
+		
+		// 一大堆 SQL 语句，不管这么多了写就是了
 		$beforesql = $this->before ? " AND time <= {$this->before}" : "";
 		$beforesql_2 = $this->before ? " WHERE time <= {$this->before}" : "";
 		$searchsql = $this->search ? " AND POSITION('{$this->search}' IN `content`) OR POSITION('{$this->search}' IN `author`)" : "";
 		$searchsql_2 = $this->search ? " WHERE POSITION('{$this->search}' IN `content`) OR POSITION('{$this->search}' IN `author`)" : "";
+		$usersql = $this->isLogin ? " AND `public`='0' OR `public`='1' OR (`public`='2' AND `author`='{$_SESSION['user']}')" : " AND `public`='0'";
+		$usersql_2 = $this->isLogin ? " WHERE `public`='0' OR `public`='1' OR (`public`='2' AND `author`='{$_SESSION['user']}')" : " WHERE `public`='0'";
+		
+		// 到这里开始查询
 		if(!empty($username)) {
 			$username = mysqli_real_escape_string($this->conn, $username);
 			$rs = mysqli_query($this->conn, "SELECT * FROM `posts` WHERE `author`='{$username}'{$beforesql}{$searchsql} ORDER BY `id` DESC LIMIT {$spage},10");
 		} else {
-			$rs = mysqli_query($this->conn, "SELECT * FROM `posts` {$beforesql_2}{$searchsql_2} ORDER BY `id` DESC LIMIT {$spage},10");
+			$rs = mysqli_query($this->conn, "SELECT * FROM `posts`{$usersql_2} {$beforesql_2}{$searchsql_2} ORDER BY `id` DESC LIMIT {$spage},10");
 		}
 		if($displayHtml) {
 			$i = 0;
