@@ -61,7 +61,7 @@ global $pigeon;
 						<p><a href="?">公共时间线</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="?user=<?php echo $_SESSION['user']; ?>">我的时间线</a></p>
 					</center>
 					<div class="alert alert-success alert-dismissable" id="alert_success"></div>
-					<div class="alert alert-success alert-dismissable" id="alert_danger"></div>
+					<div class="alert alert-danger alert-dismissable" id="alert_danger"></div>
 					<?php
 					}
 					?>
