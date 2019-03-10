@@ -276,8 +276,8 @@ if(isset($_GET['s'])) {
 					<h2><?php echo $pigeonConfig['sitename']; ?></h2>
 					<p><?php echo $pigeonConfig['description']; ?></p>
 					<hr>
-					<div class="alert alert-success alert-dismissable" id="alert_success"></div>
-					<div class="alert alert-danger alert-dismissable" id="alert_danger"></div>
+					<div id="alert_success"></div>
+					<div id="alert_danger"></div>
 				</div>
 				<div class="col-sm-3">
 					<p><blockquote><b>提示：</b>选择一个用户进行设置</blockquote></p>
@@ -331,7 +331,8 @@ if(isset($_GET['s'])) {
 		<script type="text/javascript">
 			var selectid;
 			var version = '<?php echo $pigeon->version; ?>';
-			var dismiss = '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
+			var dismiss_success = '<div class="alert alert-success alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
+			var dismiss_danger = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
 			function getUser(id) {
 				var htmlobj = $.ajax({
 					type: 'GET',
@@ -468,11 +469,11 @@ if(isset($_GET['s'])) {
 				}
 			}
 			function SuccessMsg(text) {
-				$("#alert_success").html(dismiss + text);
+				$("#alert_success").html(dismiss_success + text + "</div>");
 				$("#alert_success").fadeIn(500);
 			}
 			function ErrorMsg(text) {
-				$("#alert_danger").html(dismiss + text);
+				$("#alert_danger").html(dismiss_danger + text + "</div>");
 				$("#alert_danger").fadeIn(500);
 			}
 			window.onload = function() {
