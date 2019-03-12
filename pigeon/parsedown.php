@@ -1535,6 +1535,7 @@ class Parsedown
                     'text' => $url,
                     'attributes' => array(
                         'href' => $url,
+						'target' => '_blank'
                     ),
                 ),
             );
@@ -1556,6 +1557,7 @@ class Parsedown
                     'text' => $url,
                     'attributes' => array(
                         'href' => $url,
+						'target' => '_blank'
                     ),
                 ),
             );
