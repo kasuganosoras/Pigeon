@@ -4,7 +4,7 @@ class Pigeon {
 	public $cacheData;
 	public $writeToCache;
 	public $publicMode = true;
-	public $version = "1.0.164";
+	public $version = "1.0.168";
 	
 	/**
 	 *
@@ -17,13 +17,13 @@ class Pigeon {
 		} else {
 			include(ROOT . "/pigeon/config.php");
 			$this->config = $pigeonConfig;
-			$this->conn = mysqli_connect(
+			$this->conn = @mysqli_connect(
 				$pigeonConfig['mysql']['host'],
 				$pigeonConfig['mysql']['user'],
 				$pigeonConfig['mysql']['pass'],
 				$pigeonConfig['mysql']['name'],
 				$pigeonConfig['mysql']['port']
-			);
+			) or die("<h1>500 Internal Error</h1><p>无法连接到数据库，请检查连接设置。</p>");
 		}
 	}
 	
@@ -102,7 +102,7 @@ class Pigeon {
 			$ids = "";
 			$html = "<div id='pagecontent'><table style='width: 100%;'>";
 			if(isset($_SESSION['user']) && $this->isAdmin($_SESSION['user'])) {
-				$delete = "<span class='hoverdisplay'>&nbsp;&nbsp;|&nbsp;&nbsp;<a style='cursor: pointer;' onclick='deletepost({id})'>删除</a>&nbsp;&nbsp;|&nbsp;&nbsp;设置状态 [<a style='cursor: pointer;' onclick='changepublic({id}, 0)'>公开</a> | <a style='cursor: pointer;' onclick='changepublic({id}, 1)'>登录可见</a> | <a style='cursor: pointer;' onclick='changepublic({id}, 2)'>仅作者可见</a>]</span>";
+				$delete = "<span class='hoverdisplay'>&nbsp;&nbsp;|&nbsp;&nbsp;<a style='cursor: pointer;' onclick='deletepost({id})'>删除</a>&nbsp;&nbsp;|&nbsp;&nbsp;设置状态 &lt;<a style='cursor: pointer;' onclick='changepublic({id}, 0)'>公开</a> | <a style='cursor: pointer;' onclick='changepublic({id}, 1)'>登录可见</a> | <a style='cursor: pointer;' onclick='changepublic({id}, 2)'>仅作者可见</a>&gt;</span>";
 			}
 			$loginUser = isset($_SESSION['user']) ? $_SESSION['user'] : "";
 			$isAdmin = $this->isAdmin($loginUser);
@@ -129,7 +129,7 @@ class Pigeon {
 					}
 				}
 				$pstatus = $rw[4] == '2' ? "&nbsp;&nbsp;<code>仅自己可见</code>" : "";
-				$html .= "<tr><td class='headimg'><img src='https://secure.gravatar.com/avatar/" . md5($this->getUserInfo($rw[2])['email']) . "?s=64'</td><td class='thread'><p><small>{$rw[2]} 发表于" . $this->getDateFormat($rw[3]) . $pstatus . str_replace("{id}", $rw[0], $delete) . "</small></p>";
+				$html .= "<tr><td class='headimg'><img src='https://secure.gravatar.com/avatar/" . md5($this->getUserInfo($rw[2])['email']) . "?s=64'</td><td class='thread'><p><small>{$rw[2]} 发表于" . $this->getDateFormat($rw[3]) . "&nbsp;&nbsp;<a href='?s=msg&id={$rw[0]}' target='_blank'><i class='fa fa-external-link'></i></a>" . $pstatus . str_replace("{id}", $rw[0], $delete) . "</small></p>";
 				$html .= "<div class='message'>" . $Markdown->text($rw[1]) . "</div></td></tr>";
 			}
 			if($i == 0) {
@@ -148,6 +148,60 @@ class Pigeon {
 			@Header("ids: {$ids}");
 			$_SESSION['ids'] = $ids;
 			echo $html;
+		}
+	}
+	
+	/**
+	 *
+	 *	获取指定消息
+	 *
+	 */
+	public function getMessageById($id) {
+		if(!preg_match("/^[0-9]{1,10}$/", $id)) {
+			return false;
+		}
+		if(!$this->conn) {
+			return false;
+		}
+		$delete = "";
+		$Markdown = new Parsedown();
+		$Markdown->setBreaksEnabled(false);
+		$id = mysqli_real_escape_string($this->conn, $id);
+		$rs = mysqli_fetch_array(mysqli_query($this->conn, "SELECT * FROM `posts` WHERE `id`='{$id}'"));
+		$this->isLogin = (isset($_SESSION['user']) && $_SESSION['user'] !== '');
+		if($rs) {
+			$html = "<div id='pagecontent'><table style='width: 100%;'>";
+			if(isset($_SESSION['user']) && $this->isAdmin($_SESSION['user'])) {
+				$delete = "<span class='hoverdisplay'>&nbsp;&nbsp;|&nbsp;&nbsp;<a style='cursor: pointer;' onclick='deletepost({id})'>删除</a>&nbsp;&nbsp;|&nbsp;&nbsp;设置状态 &lt;<a style='cursor: pointer;' onclick='changepublic({id}, 0)'>公开</a> | <a style='cursor: pointer;' onclick='changepublic({id}, 1)'>登录可见</a> | <a style='cursor: pointer;' onclick='changepublic({id}, 2)'>仅作者可见</a>&gt;</span>";
+			}
+			$loginUser = isset($_SESSION['user']) ? $_SESSION['user'] : "";
+			$isAdmin = $this->isAdmin($loginUser);
+			if($this->config['enable_safemode']) {
+				if($this->config['enable_foruser']) {
+					if($this->isAdmin($rs['author'])) {
+						$Markdown->setSafeMode(false);
+					} else {
+						$Markdown->setSafeMode(true);
+					}
+				} else {
+					$Markdown->setSafeMode(true);
+				}
+			}
+			if($rs['public'] == "1" && !$this->isLogin) {
+				return false;
+			}
+			if($rs['public'] == "2" && $loginUser !== $rs['public']) {
+				if(!$isAdmin) {
+					return false;
+				}
+			}
+			$pstatus = $rs['public'] == '2' ? "&nbsp;&nbsp;<code>仅自己可见</code>" : "";
+			$html .= "<tr><td class='headimg'><img src='https://secure.gravatar.com/avatar/" . md5($this->getUserInfo($rs['author'])['email']) . "?s=64'</td><td class='thread'><p><small>{$rs['author']} 发表于" . $this->getDateFormat($rs['time']) . $pstatus . str_replace("{id}", $id, $delete) . "</small></p>";
+			$html .= "<div class='message'>" . $Markdown->text($rs['content']) . "</div></td></tr>";
+			$html .= "</table></div>";
+			return $html;
+		} else {
+			return false;
 		}
 	}
 	

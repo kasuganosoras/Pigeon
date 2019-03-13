@@ -341,6 +341,23 @@ if(isset($_GET['s'])) {
 				$pigeon->getTemplate("footer");
 			}
 			break;
+		case "msg":
+			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
+				$message = $pigeon->getMessageById($_GET['id']);
+				$pigeon->isAjax = false;
+				$pigeon->isLogin = (isset($_SESSION['user']) && $_SESSION['user'] !== '');
+				if($message) {
+					$pigeon->getTemplate("header");
+					echo $message;
+					$pigeon->getTemplate("footer");
+				} else {
+					$pigeon->getTemplate("header");
+					echo "<h3>404 Not found</h3>";
+					echo "<p>未找到指定的消息内容，该消息已被删除或者您暂时没有权限查看。</p>";
+					$pigeon->getTemplate("footer");
+				}
+			}
+			break;
 	}
 } else {
 	// 默认首页

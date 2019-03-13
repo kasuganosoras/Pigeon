@@ -47,6 +47,11 @@ if($enable_registe == "y") {
 		$smtp_mail = empty($smtp_mail) ? "noreply@example.com" : $smtp_mail;
 	} else {
 		$enable_smtp = 'false';
+		$smtp_host = "";
+		$smtp_port = 25;
+		$smtp_user = "";
+		$smtp_pass = "";
+		$smtp_name = "";
 	}
 } else {
 	$enable_registe = 'false';
@@ -70,13 +75,15 @@ if($enable_recaptcha == "y") {
 	$recaptcha_key_post = empty($recaptcha_key_post) ? "" : $recaptcha_key_post;
 } else {
 	$enable_recaptcha = 'false';
+	$recaptcha_key = '';
+	$recaptcha_key_post = '';
 }
 $conn = mysqli_connect($db_host, $db_user, $db_pass, $db_name, $db_port);
 if(!$conn) {
 	exit("无法连接到数据库主机！错误：" . mysqli_error($conn));
 } else {
-	mysqli_query($conn, "SET FOREIGN_KEY_CHECKS=0;");
-	mysqli_query($conn, "DROP TABLE IF EXISTS `posts`;");
+	mysqli_query($conn, "SET FOREIGN_KEY_CHECKS=0;") or die("安装出错，请反馈给作者。\n错误代码：" . mysqli_error($conn) . "\n");
+	mysqli_query($conn, "DROP TABLE IF EXISTS `posts`;") or die("安装出错，请反馈给作者。\n错误代码：" . mysqli_error($conn) . "\n");
 	mysqli_query($conn, "CREATE TABLE `posts` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `content` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -84,8 +91,8 @@ if(!$conn) {
   `time` bigint(32) NOT NULL,
   `public` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
-	mysqli_query($conn, "DROP TABLE IF EXISTS `users`;");
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;") or die("安装出错，请反馈给作者。\n错误代码：" . mysqli_error($conn) . "\n");
+	mysqli_query($conn, "DROP TABLE IF EXISTS `users`;") or die("安装出错，请反馈给作者。\n错误代码：" . mysqli_error($conn) . "\n");
 	mysqli_query($conn, "CREATE TABLE `users` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
   `username` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -99,7 +106,9 @@ if(!$conn) {
   `status` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `token` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;") or die("安装出错，请反馈给作者。\n错误代码：" . mysqli_error($conn) . "\n");
+	// 字符串转义
+	$sitename = str_replace("'", "\\'", $sitename);
 	// 写入配置文件
 	$template = file_get_contents("pigeon/config-template.php");
 	$template = str_replace("{DB_HOST}", $db_host, $template);
@@ -158,7 +167,7 @@ if(!$conn) {
 		NULL,
 		'200',
 		'{$token}'
-	)");
+	)") or die("添加用户出错，请反馈给作者。\n错误代码：" . mysqli_error($conn) . "\n");
 	echo "+==================================================================+\n";
 	echo "恭喜您，Pigeon 已经安装完成，您可以访问您的网站并开始使用了。\n";
 	echo "如果在使用中遇到任何问题，欢迎通过 Issues 提交或者联系 QQ 204034。\n";
