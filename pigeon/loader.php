@@ -157,6 +157,7 @@ if(isset($_GET['s'])) {
 				}
 				if($error == '') {
 					$ust = '200';
+					$needVerify = '';
 					if($pigeon->config['smtp']['enable']) {
 						$ust = '401';
 						$http_type = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) ? 'https://' : 'http://';
