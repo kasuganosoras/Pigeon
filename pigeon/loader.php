@@ -358,6 +358,60 @@ if(isset($_GET['s'])) {
 				}
 			}
 			break;
+		case "getmsg":
+			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
+				$message = $pigeon->getRawMessageById($_GET['id']);
+				$pigeon->isAjax = false;
+				$pigeon->isLogin = (isset($_SESSION['user']) && $_SESSION['user'] !== '');
+				if($message) {
+					echo json_encode(Array(
+						'content' => $message['content'],
+						'public' => $message['public'],
+						'author' => $message['author'],
+						'time' => $message['time']
+					));
+				} else {
+					$pigeon->Exception("未找到指定的消息内容，该消息已被删除或者您暂时没有权限查看。");
+				}
+			}
+			break;
+		case "editpost":
+			if(isset($_GET['id']) && preg_match("/^[0-9]{1,10}$/", $_GET['id'])) {
+				if(!isset($_SESSION['user'])) {
+					if(isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
+						$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
+						$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
+						if($rs) {
+							$_SESSION['user'] = $rs['user'];
+							$_SESSION['email'] = $rs['email'];
+						} else {
+							$pigeon->Exception("Permission denied");
+						}
+					}
+					$pigeon->Exception("请先登录。");
+				}
+				if($_POST['ispublic'] !== '0' && $_POST['ispublic'] !== '1' && $_POST['ispublic'] !== '2') {
+					$pigeon->Exception("Bad Request");
+				}
+				$id = mysqli_real_escape_string($pigeon->conn, $_GET['id']);
+				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `posts` WHERE `id`='{$id}'"));
+				if($rs) {
+					if($rs['author'] !== $_SESSION['user'] && !$pigeon->isAdmin($_SESSION['user'])) {
+						$pigeon->Exception("未找到指定的消息内容，该消息已被删除或者您暂时没有权限查看。");
+					}
+					$content = mysqli_real_escape_string($pigeon->conn, $_POST['content']);
+					$public = mysqli_real_escape_string($pigeon->conn, $_POST['ispublic']);
+					$textlen = mb_strlen($content);
+					if($textlen < 1 || $textlen > 1000000) {
+						$pigeon->Exception("最少输入 1 个字符，最大输入 100 万个字符，当前已输入：{$textlen}。");
+					}
+					mysqli_query($pigeon->conn, "UPDATE `posts` SET `content`='{$content}',`public`='{$public}' WHERE `id`='{$id}'");
+					echo "Successful";
+				} else {
+					$pigeon->Exception("未找到指定的消息内容，该消息已被删除或者您暂时没有权限查看。");
+				}
+			}
+			break;
 	}
 } else {
 	// 默认首页
