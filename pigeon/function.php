@@ -4,7 +4,7 @@ class Pigeon {
 	public $cacheData;
 	public $writeToCache;
 	public $publicMode = true;
-	public $version = "1.0.172";
+	public $version = "1.0.173";
 	
 	/**
 	 *
