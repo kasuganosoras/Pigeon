@@ -228,22 +228,27 @@ if(isset($_GET['s'])) {
 			<?
 			break;
 		case "newpost":
-			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
-				$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
-			}
 			if(isset($_POST['content']) && isset($_POST['ispublic'])) {
+				$apiUser = false;
 				if(!isset($_SESSION['user'])) {
 					if(isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
 						$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
 						$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
 						if($rs) {
-							$_SESSION['user'] = $rs['user'];
+							$_SESSION['user'] = $rs['username'];
 							$_SESSION['email'] = $rs['email'];
+							$apiUser = true;
 						} else {
 							$pigeon->Exception("Permission denied");
 						}
+					} else {
+						$pigeon->Exception("请先登录。");
 					}
-					$pigeon->Exception("请先登录。");
+				}
+				if(!$apiUser) {
+					if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+						$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
+					}
 				}
 				if($_POST['ispublic'] !== '0' && $_POST['ispublic'] !== '1' && $_POST['ispublic'] !== '2') {
 					$pigeon->Exception("Bad Request");
@@ -258,22 +263,27 @@ if(isset($_GET['s'])) {
 			}
 			break;
 		case "deletepost":
-			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
-				$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
-			}
 			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
+				$apiUser = false;
 				if(!isset($_SESSION['user'])) {
 					if(isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
 						$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
 						$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
 						if($rs) {
-							$_SESSION['user'] = $rs['user'];
+							$_SESSION['user'] = $rs['username'];
 							$_SESSION['email'] = $rs['email'];
+							$apiUser = true;
 						} else {
 							$pigeon->Exception("Permission denied");
 						}
+					} else {
+						$pigeon->Exception("请先登录。");
 					}
-					$pigeon->Exception("请先登录。");
+				}
+				if(!$apiUser) {
+					if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+						$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
+					}
 				}
 				if(!$pigeon->isAdmin($_SESSION['user'])) {
 					$pigeon->Exception("请求被拒绝。");
@@ -288,22 +298,27 @@ if(isset($_GET['s'])) {
 			}
 			break;
 		case "changepublic":
-			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
-				$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
-			}
-			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id']) && preg_match("/^[0-9]{1}$/", $_GET['newstatus'])) {
+			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id']) && isset($_GET['newstatus']) && preg_match("/^[0-9]{1}$/", $_GET['newstatus'])) {
+				$apiUser = false;
 				if(!isset($_SESSION['user'])) {
 					if(isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
 						$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
 						$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
 						if($rs) {
-							$_SESSION['user'] = $rs['user'];
+							$_SESSION['user'] = $rs['username'];
 							$_SESSION['email'] = $rs['email'];
+							$apiUser = true;
 						} else {
 							$pigeon->Exception("Permission denied");
 						}
+					} else {
+						$pigeon->Exception("请先登录。");
 					}
-					$pigeon->Exception("请先登录。");
+				}
+				if(!$apiUser) {
+					if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+						$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
+					}
 				}
 				if(!$pigeon->isAdmin($_SESSION['user'])) {
 					$pigeon->Exception("请求被拒绝。");
