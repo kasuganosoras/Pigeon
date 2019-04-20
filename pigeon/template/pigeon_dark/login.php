@@ -13,6 +13,7 @@ global $pigeon, $error, $alert;
 								}
 								?>
 								<form method="POST">
+									<input type="hidden" name="seid" value="<?php echo isset($_SESSION['seid']) ? $_SESSION['seid'] : ""; ?>" />
 									<div class="input-group">
 										<span class="input-group-addon" style="border-radius: 6px 0px 0px 0px;"><i class="fa fa-user" style="width: 16px;"></i></span>
 										<input type="text" placeholder="账号" name="username" class="form-control" required style="box-shadow: none;height: 42px;border-radius: 0px 6px 0px 0px;">

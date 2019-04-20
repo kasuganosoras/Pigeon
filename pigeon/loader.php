@@ -36,6 +36,9 @@ if(isset($_GET['s'])) {
 			$error = "";
 			$alert = "danger";
 			if(isset($_POST['username']) && isset($_POST['password'])) {
+				if(!isset($_POST['seid']) || $_POST['seid'] !== $_SESSION['seid']) {
+					$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
+				}
 				if($pigeon->config['recaptcha_key'] !== '') {
 					if(!isset($_POST['g-recaptcha-response']) || !$pigeon->recaptcha_verify($_POST['g-recaptcha-response'])) {
 						$error = "Recaptcha 验证失败。";
@@ -132,6 +135,9 @@ if(isset($_GET['s'])) {
 				$error = "抱歉，本站暂不开放注册。";
 			}
 			if(isset($_POST['username']) && isset($_POST['password']) && isset($_POST['email'])) {
+				if(!isset($_POST['seid']) || $_POST['seid'] !== $_SESSION['seid']) {
+					$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
+				}
 				if(!preg_match("/^[A-Za-z0-9\_\-]+$/", $_POST['username'])) {
 					$error = "用户名不合法，只允许 <code>A-Z a-z 0-9 _ -</code>";
 				}
