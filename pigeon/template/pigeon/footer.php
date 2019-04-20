@@ -18,7 +18,7 @@ global $pigeon;
 							<img src="https://secure.gravatar.com/avatar/<?php echo md5($_SESSION['email']); ?>?s=256" class="loginhead">
 						</center>
 						<h3><?php echo $_SESSION['user']; ?></h3>
-						<p>欢迎回来！<a href="?s=logout">[退出登录]</a></p>
+						<p>欢迎回来！<a href="?s=logout&seid=<?php echo isset($_SESSION['seid']) ? $_SESSION['seid'] : ""; ?>">[退出登录]</a></p>
 						<p>你的 Token（可用于 API 发布）</p>
 						<p><pre><?php echo $_SESSION['token']; ?></pre></p>
 						<?php
@@ -56,6 +56,7 @@ global $pigeon;
 				</div>
 		</div>
 		<script type="text/javascript">
+			var seid = '<?php echo isset($_SESSION['seid']) ? $_SESSION['seid'] : ""; ?>';
 			var auto_refresh = true;
 			var ptime = '';
 			var psearch = '';
@@ -77,7 +78,7 @@ global $pigeon;
 			function newpost() {
 				var htmlobj = $.ajax({
 					type: 'POST',
-					url: "?s=newpost",
+					url: "?s=newpost&seid=" + seid,
 					data: {
 						ispublic: $("#ispublic").val(),
 						content: $("#newpost").val()
@@ -164,7 +165,11 @@ global $pigeon;
 				auto_refresh = false;
 				var htmlobj = $.ajax({
 					type: 'GET',
-					url: "?s=deletepost&id=" + id,
+					data: {
+						s: "deletepost",
+						id: id,
+						seid: seid
+					},
 					async:true,
 					error: function() {
 						ErrorMsg("错误：" + htmlobj.responseText);
@@ -182,7 +187,12 @@ global $pigeon;
 				auto_refresh = false;
 				var htmlobj = $.ajax({
 					type: 'GET',
-					url: "?s=changepublic&id=" + id + "&newstatus=" + newstatus,
+					data: {
+						s: "changepublic",
+						id: id,
+						newstatus: newstatus,
+						seid: seid
+					},
 					async:true,
 					error: function() {
 						ErrorMsg("错误：" + htmlobj.responseText);
@@ -228,7 +238,11 @@ global $pigeon;
 			function edit(id) {
 				var htmlobj = $.ajax({
 					type: 'GET',
-					url: "?s=getmsg&id=" + id,
+					data: {
+						s: "getmsg",
+						id: id,
+						seid: seid
+					},
 					async:true,
 					error: function() {
 						ErrorMsg("错误：" + htmlobj.responseText);

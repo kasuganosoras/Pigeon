@@ -4,7 +4,7 @@ class Pigeon {
 	public $cacheData;
 	public $writeToCache;
 	public $publicMode = true;
-	public $version = "1.0.174";
+	public $version = "1.0.175";
 	
 	/**
 	 *
@@ -319,6 +319,26 @@ class Pigeon {
 			return " " . round(($nowTime - $time) / 86400) . " 天前";
 		} else {
 			return " " . date("Y-m-d H:i:s", $time);
+		}
+	}
+	
+	/**
+	 *
+	 *	生成 UUID
+	 *
+	 */
+	public function guid() {
+		if(function_exists('com_create_guid')) {
+			return com_create_guid();
+		} else {
+			mt_srand((double)microtime() * 10000);
+			$charid = strtoupper(md5(uniqid(rand(), true)));
+			$uuid = substr($charid, 0, 8) . "-"
+				. substr($charid, 8, 4) . "-"
+				. substr($charid,12, 4) . "-"
+				. substr($charid,16, 4) . "-"
+				. substr($charid,20,12);
+			return $uuid;
 		}
 	}
 	
