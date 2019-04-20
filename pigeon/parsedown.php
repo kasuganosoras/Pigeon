@@ -1357,7 +1357,7 @@ class Parsedown
             'element' => array(
                 'name' => 'img',
                 'attributes' => array(
-                    'src' => $Link['element']['attributes']['href'],
+                    'src' => 'pigeon/imgproxy/?url=' . urlencode(base64_encode($Link['element']['attributes']['href'])),
                     'alt' => $Link['element']['handler']['argument'],
                 ),
                 'autobreak' => true,
