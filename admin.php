@@ -86,6 +86,9 @@ if(!isAdmin($_SESSION['user'])) {
 if(isset($_GET['s'])) {
 	switch($_GET['s']) {
 		case "getuser":
+			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+				ErrorMsg("CSRF 验证失败，请尝试重新登录。");
+			}
 			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
 				$uid = mysqli_real_escape_string($pigeon->conn, $_GET['id']);
 				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `id`='{$uid}'"));
@@ -108,6 +111,9 @@ if(isset($_GET['s'])) {
 			}
 			break;
 		case "userlist":
+			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+				ErrorMsg("CSRF 验证失败，请尝试重新登录。");
+			}
 			?>
 			<tbody>
 				<tr>
@@ -136,6 +142,9 @@ if(isset($_GET['s'])) {
 			<?php
 			break;
 		case "saveuser":
+			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+				ErrorMsg("CSRF 验证失败，请尝试重新登录。");
+			}
 			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
 				$uid = mysqli_real_escape_string($pigeon->conn, $_GET['id']);
 				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `id`='{$uid}'"));
@@ -178,6 +187,9 @@ if(isset($_GET['s'])) {
 			}
 			break;
 		case "deleteuser":
+			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+				ErrorMsg("CSRF 验证失败，请尝试重新登录。");
+			}
 			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
 				$uid = mysqli_real_escape_string($pigeon->conn, $_GET['id']);
 				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `id`='{$uid}'"));
@@ -190,10 +202,16 @@ if(isset($_GET['s'])) {
 			}
 			break;
 		case "updatecheck":
+			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+				ErrorMsg("CSRF 验证失败，请尝试重新登录。");
+			}
 			$update = @file_get_contents("https://cdn.tcotp.cn:4443/pigeon/");
 			echo $update;
 			break;
 		case "updateexecute":
+			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+				ErrorMsg("CSRF 验证失败，请尝试重新登录。");
+			}
 			$update = @file_get_contents("https://cdn.tcotp.cn:4443/pigeon/");
 			$update = json_decode($update, true);
 			if(!$update) {
@@ -329,6 +347,7 @@ if(isset($_GET['s'])) {
 			</style>
 		</div>
 		<script type="text/javascript">
+			var seid = '<?php echo isset($_SESSION['seid']) ? $_SESSION['seid'] : ""; ?>';
 			var selectid;
 			var version = '<?php echo $pigeon->version; ?>';
 			var dismiss_success = '<div class="alert alert-success alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
@@ -336,7 +355,7 @@ if(isset($_GET['s'])) {
 			function getUser(id) {
 				var htmlobj = $.ajax({
 					type: 'GET',
-					url: "?s=getuser&id=" + id,
+					url: "?s=getuser&id=" + id + "&seid=" + seid,
 					async:true,
 					error: function() {
 						ErrorMsg("错误：" + htmlobj.responseText);
@@ -368,7 +387,7 @@ if(isset($_GET['s'])) {
 				}
 				var htmlobj = $.ajax({
 					type: 'POST',
-					url: "?s=saveuser&id=" + selectid,
+					url: "?s=saveuser&id=" + selectid + "&seid=" + seid,
 					data: {
 						username: $("#username").val(),
 						password: $("#password").val(),
@@ -396,7 +415,7 @@ if(isset($_GET['s'])) {
 				if(confirm("您确定要删除此用户吗？该操作是不可逆的，请谨慎选择！")) {
 					var htmlobj = $.ajax({
 						type: 'GET',
-						url: "?s=deleteuser&id=" + selectid,
+						url: "?s=deleteuser&id=" + selectid + "&seid=" + seid,
 						async:true,
 						error: function() {
 							ErrorMsg("错误：" + htmlobj.responseText);
@@ -413,7 +432,7 @@ if(isset($_GET['s'])) {
 			function LoadUserList() {
 				var htmlobj = $.ajax({
 					type: 'GET',
-					url: "?s=userlist",
+					url: "?s=userlist&seid=" + seid,
 					async:true,
 					error: function() {
 						ErrorMsg("错误：" + htmlobj.responseText);
@@ -428,7 +447,7 @@ if(isset($_GET['s'])) {
 			function CheckNewVersion() {
 				var htmlobj = $.ajax({
 					type: 'GET',
-					url: "?s=updatecheck",
+					url: "?s=updatecheck&seid=" + seid,
 					async:true,
 					error: function() {
 						ErrorMsg("错误：" + htmlobj.responseText);
@@ -454,7 +473,7 @@ if(isset($_GET['s'])) {
 				if(confirm("您确定要更新吗？更新可能会覆盖您对系统自带模板的修改，但是不会影响您的自定义模板，建议您备份好数据后再执行。\n\n更新可能需要较长时间，请耐心等待，不要关闭网页！")) {
 					var htmlobj = $.ajax({
 						type: 'GET',
-						url: "?s=updateexecute",
+						url: "?s=updateexecute&seid=" + seid,
 						async: true,
 						timeout: 100000,
 						error: function() {
