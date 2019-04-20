@@ -5,6 +5,10 @@ include(ROOT . "/pigeon/function.php");
 include(ROOT . "/pigeon/parsedown.php");
 // 实例化 Pigeon
 $pigeon = new Pigeon();
+// 生成 SESSION ID
+if(!isset($_SESSION['seid'])) {
+	$_SESSION['seid'] = $pigeon->guid();
+}
 // 判断传入参数 s
 if(isset($_GET['s'])) {
 	switch($_GET['s']) {
@@ -198,8 +202,14 @@ if(isset($_GET['s'])) {
 			$pigeon->getTemplate("footer");
 			break;
 		case "logout":
+			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+				echo "<script>window.location='?';</script>";
+				exit;
+			}
 			unset($_SESSION['user']);
 			unset($_SESSION['email']);
+			unset($_SESSION['token']);
+			unset($_SESSION['seid']);
 			?>
 			<html>
 				<head>
@@ -212,6 +222,9 @@ if(isset($_GET['s'])) {
 			<?
 			break;
 		case "newpost":
+			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+				$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
+			}
 			if(isset($_POST['content']) && isset($_POST['ispublic'])) {
 				if(!isset($_SESSION['user'])) {
 					if(isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
@@ -239,6 +252,9 @@ if(isset($_GET['s'])) {
 			}
 			break;
 		case "deletepost":
+			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+				$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
+			}
 			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
 				if(!isset($_SESSION['user'])) {
 					if(isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
@@ -266,6 +282,9 @@ if(isset($_GET['s'])) {
 			}
 			break;
 		case "changepublic":
+			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+				$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
+			}
 			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id']) && preg_match("/^[0-9]{1}$/", $_GET['newstatus'])) {
 				if(!isset($_SESSION['user'])) {
 					if(isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
@@ -359,6 +378,9 @@ if(isset($_GET['s'])) {
 			}
 			break;
 		case "getmsg":
+			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+				$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
+			}
 			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
 				$message = $pigeon->getRawMessageById($_GET['id']);
 				$pigeon->isAjax = false;
