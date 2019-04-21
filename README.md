@@ -55,7 +55,7 @@ php install.php
 
 - [x] 管理员后台系统（已实现）
 - [ ] 支持 OAuth 登录
-- [ ] 完善的 API 系统
+- [x] 完善的 API 系统
 - [ ] 支持对接其他平台
 
 ## 关于 Admin Console
