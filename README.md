@@ -3,7 +3,8 @@
 
 一个轻量化的留言板 / 记事本 / 社交系统 / 博客，没有明确的作用定义，一切都随心所欲。
 
-演示 demo：https://pigeon.ssr.wine/
+- 演示 demo：https://pigeon.ssr.wine/
+- 博客示例：https://tql.ink/
 
 ## 简介
 
