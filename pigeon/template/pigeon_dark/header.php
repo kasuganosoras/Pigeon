@@ -1,5 +1,8 @@
 <?php
 global $pigeon;
+if(!$pigeon) {
+	exit();
+}
 ?>
 <html>
 	<head>

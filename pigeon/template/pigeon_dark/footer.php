@@ -1,5 +1,8 @@
 <?php
 global $pigeon;
+if(!$pigeon) {
+	exit();
+}
 ?>
 				</div>
 				<div class="col-sm-3">

@@ -1,5 +1,8 @@
 <?php
 global $pigeon, $error, $alert;
+if(!$pigeon) {
+	exit();
+}
 ?>
 					<center>
 						<h3>登录 <?php echo $pigeon->config['sitename']; ?> </h3>

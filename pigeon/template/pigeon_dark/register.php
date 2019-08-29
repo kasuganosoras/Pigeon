@@ -1,5 +1,16 @@
 <?php
 global $pigeon, $error, $alert;
+if(!$pigeon) {
+	exit();
+}
+$temp_user = "";
+$temp_email = "";
+if(preg_match("/^[A-Za-z0-9\_\-]+$/", $_POST['username'])) {
+	$temp_user = isset($_POST['username']) ? $_POST['username'] : "";
+}
+if(preg_match("/^[a-zA-Z0-9]+([-_.][a-zA-Z0-9]+)*@([a-zA-Z0-9]+[-.])+([a-z]{2,5})$/ims", $_POST['email'])) {
+	$temp_email = isset($_POST['email']) ? $_POST['email'] : "";
+}
 ?>
 					<center>
 						<h3>注册 <?php echo $pigeon->config['sitename']; ?> </h3>
