@@ -50,8 +50,9 @@ $randpass = substr(md5(sha1(time() . date("Y-m-d H:i:s") . mt_rand(0, 999999999)
 <?php
 
 if(count($_POST)==0) {
-	die("请通过命令行执行 install.php");
+	die("请填写上面的信息并点击提交按钮。");
 }
+extract( $_POST);
 
 
 if(!file_exists("pigeon/config-template.php")) {
