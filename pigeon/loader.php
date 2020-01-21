@@ -230,7 +230,7 @@ if(isset($_GET['s'])) {
 		case "newpost":
 			if(isset($_POST['content']) && isset($_POST['ispublic'])) {
 				$apiUser = false;
-				if(!isset($_SESSION['user'])) {
+				if(isset($_GET['token']||!isset($_SESSION['user'])) {
 					if(isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
 						$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
 						$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));

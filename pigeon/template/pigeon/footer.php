@@ -326,3 +326,6 @@ if(!$pigeon) {
 		</script>
 	</body>
 </html>
+
+<script async id="chevereto-pup-src" src="https://imgchr.com/sdk/pup.js" data-url="https://imgchr.com/upload" data-auto-insert="markdown-embed-medium"></script>
+
