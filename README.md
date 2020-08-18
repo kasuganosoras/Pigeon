@@ -54,6 +54,8 @@ php install.php
 
 安装程序是没有界面的，请通过命令行执行 `install.php`，而不是通过网页访问它。
 
+> 如需手动安装（不使用安装程序），请 [点击这里阅读安装方法](https://github.com/kasuganosoras/Pigeon/wiki/Install#%E6%89%8B%E5%8A%A8%E5%AE%89%E8%A3%85-pigeon)
+
 ## 未来计划
 
 - [x] 管理员后台系统（已实现）
