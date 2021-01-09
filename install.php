@@ -23,6 +23,16 @@ $db_name = empty($db_name) ? "pigeon" : $db_name;
 echo "是否启用注册功能 (y/n)> ";
 $enable_registe = trim(fgets(STDIN));
 $enable_registe = empty($enable_registe) ? "y" : strtolower($enable_registe);
+
+// https://github.com/kasuganosoras/Pigeon/issues/31
+$enable_smtp = 'false';
+$smtp_host = "";
+$smtp_port = 25;
+$smtp_user = "";
+$smtp_pass = "";
+$smtp_name = "";
+$smtp_mail = "";
+
 if($enable_registe == "y") {
 	$enable_registe = 'true';
 	echo "是否启用注册邮箱验证 (y/n)> ";
@@ -45,17 +55,11 @@ if($enable_registe == "y") {
 		echo "请输入 SMTP 邮箱 (noreply@example.com)> ";
 		$smtp_mail = trim(fgets(STDIN));
 		$smtp_mail = empty($smtp_mail) ? "noreply@example.com" : $smtp_mail;
-	} else {
-		$enable_smtp = 'false';
-		$smtp_host = "";
-		$smtp_port = 25;
-		$smtp_user = "";
-		$smtp_pass = "";
-		$smtp_name = "";
 	}
 } else {
 	$enable_registe = 'false';
 }
+
 echo "请输入站点名称 (Pigeon)> ";
 $sitename = trim(fgets(STDIN));
 $sitename = empty($sitename) ? "Pigeon" : $sitename;
