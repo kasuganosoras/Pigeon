@@ -133,7 +133,8 @@ class Pigeon {
 				}
 				$sdelete = ($rw[2] == $loginUser || $isAdmin) ? $delete : "";
 				$pstatus = $rw[4] == '2' ? "&nbsp;&nbsp;<code>仅自己可见</code>" : "";
-				$html .= "<tr><td class='headimg'><img src='https://secure.gravatar.com/avatar/" . md5($this->getUserInfo($rw[2])['email']) . "?s=64'</td><td class='thread'><p><small>{$rw[2]} 发表于" . $this->getDateFormat($rw[3]) . "&nbsp;&nbsp;<a href='?s=msg&id={$rw[0]}' target='_blank'><i class='fa fa-external-link'></i></a>" . $pstatus . str_replace("{id}", $rw[0], $sdelete) . "</small></p>";
+				//$html .= "<tr><td class='headimg'><img src='https://secure.gravatar.com/avatar/" . md5($this->getUserInfo($rw[2])['email']) . "?s=64'</td><td class='thread'><p><small>{$rw[2]} 发表于" . $this->getDateFormat($rw[3]) . "&nbsp;&nbsp;<a href='?s=msg&id={$rw[0]}' target='_blank'><i class='fa fa-external-link'></i></a>" . $pstatus . str_replace("{id}", $rw[0], $sdelete) . "</small></p>";
+				$html .= "<tr><td class='headimg'><img src='./pigeon/public/image/21232f297a57a5a743894a0e4a801fc3.jpg'</td><td class='thread'><p><small>{$rw[2]} 发表于" . $this->getDateFormat($rw[3]) . "&nbsp;&nbsp;<a href='?s=msg&id={$rw[0]}' target='_blank'><i class='fa fa-external-link'></i></a>" . $pstatus . str_replace("{id}", $rw[0], $sdelete) . "</small></p>";
 				$html .= "<div class='message'>" . $Markdown->text($rw[1]) . "</div></td></tr>";
 			}
 			if($i == 0) {
@@ -200,7 +201,8 @@ class Pigeon {
 				}
 			}
 			$pstatus = $rs['public'] == '2' ? "&nbsp;&nbsp;<code>仅自己可见</code>" : "";
-			$html .= "<tr><td class='headimg'><img src='https://secure.gravatar.com/avatar/" . md5($this->getUserInfo($rs['author'])['email']) . "?s=64'</td><td class='thread'><p><small>{$rs['author']} 发表于" . $this->getDateFormat($rs['time']) . $pstatus . str_replace("{id}", $id, $delete) . "</small></p>";
+			//$html .= "<tr><td class='headimg'><img src='https://secure.gravatar.com/avatar/" . md5($this->getUserInfo($rs['author'])['email']) . "?s=64'</td><td class='thread'><p><small>{$rs['author']} 发表于" . $this->getDateFormat($rs['time']) . $pstatus . str_replace("{id}", $id, $delete) . "</small></p>";
+			$html .= "<tr><td class='headimg'><img src='./pigeon/public/image/21232f297a57a5a743894a0e4a801fc3.jpg'</td><td class='thread'><p><small>{$rs['author']} 发表于" . $this->getDateFormat($rs['time']) . $pstatus . str_replace("{id}", $id, $delete) . "</small></p>";
 			$html .= "<div class='message'>" . $Markdown->text($rs['content']) . "</div></td></tr>";
 			$html .= "</table></div>";
 			return $html;

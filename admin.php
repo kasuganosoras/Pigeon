@@ -252,11 +252,11 @@ if(isset($_GET['s'])) {
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=11">
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous">
-		<link rel="stylesheet" href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous">
+		<link rel="stylesheet" href="./pigeon/public/css/bootstrap.min.css" crossorigin="anonymous">
+		<link rel="stylesheet" href="./pigeon/public/css/font-awesome.min.css" crossorigin="anonymous">
 		<title><?php echo $pigeonConfig['sitename']; ?> - Admin Console</title>
-		<script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" crossorigin="anonymous"></script>
+		<script src="./pigeon/public/js/jquery.min.js"></script>
+		<script src="./pigeon/public/js/bootstrap.min.js" crossorigin="anonymous"></script>
 		<style type="text/css">
 			* {
 				transition-duration:0.5s;

@@ -18,7 +18,8 @@ if(!$pigeon) {
 					if(isset($_SESSION['user']) && isset($_SESSION['email'])) {
 						?>
 						<center>
-							<img src="https://secure.gravatar.com/avatar/<?php echo md5($_SESSION['email']); ?>?s=256" class="loginhead">
+<!--							<!--img src="https://secure.gravatar.com/avatar/--><?php //echo md5($_SESSION['email']); ?><!--?s=256" class="loginhead">-->
+							<img src="./pigeon/public/image/21232f297a57a5a743894a0e4a801fc3.jpg" class="loginhead">
 						</center>
 						<h3><?php echo $_SESSION['user']; ?></h3>
 						<p>欢迎回来！<a href="?s=logout&seid=<?php echo isset($_SESSION['seid']) ? $_SESSION['seid'] : ""; ?>">[退出登录]</a></p>
