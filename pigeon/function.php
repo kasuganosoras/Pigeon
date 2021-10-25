@@ -4,7 +4,7 @@ class Pigeon {
 	public $cacheData;
 	public $writeToCache;
 	public $publicMode = true;
-	public $version = "1.0.176";
+	public $version = "1.0.177";
 	
 	/**
 	 *
@@ -25,6 +25,48 @@ class Pigeon {
 				$pigeonConfig['mysql']['port']
 			) or die("<h1>500 Internal Error</h1><p>无法连接到数据库，请检查连接设置。</p>");
 		}
+	}
+	
+	/**
+	 *
+	 *	createSession 创建新的会话
+	 *
+	 */
+	public function createSession() {
+		session_start();
+		if (isset($_SESSION['destroyed'])) {
+		   if ($_SESSION['destroyed'] < time()-300) {
+			   unset($_SESSION['user']);
+			   unset($_SESSION['email']);
+			   unset($_SESSION['token']);
+			   remove_all_authentication_flag_from_active_sessions($_SESSION['userid']);
+			   exit();
+		   }
+		   if (isset($_SESSION['new_session_id'])) {
+			   session_commit();
+			   session_id($_SESSION['new_session_id']);
+			   session_start();
+			   return;
+		   }
+	   }
+	}
+	
+	/**
+	 *
+	 *	updateSessionId 更新会话 ID
+	 *
+	 */
+	public function updateSessionId() {
+		$new_session_id = session_create_id();
+		$_SESSION['new_session_id'] = $new_session_id;
+		$_SESSION['destroyed'] = time();
+		session_commit();
+		session_id($new_session_id);
+		ini_set('session.use_strict_mode', 0);
+		session_start();
+		@ini_set('session.use_strict_mode', 1);
+		unset($_SESSION['destroyed']);
+		unset($_SESSION['new_session_id']);
 	}
 	
 	/**
