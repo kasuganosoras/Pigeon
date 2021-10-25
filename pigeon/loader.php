@@ -9,7 +9,7 @@ include(ROOT . "/pigeon/parsedown.php");
 // 实例化 Pigeon
 $pigeon = new Pigeon();
 // 生成 SESSION ID
-$pigeon->CreateSession();
+$pigeon->createSession();
 if(!isset($_SESSION['seid'])) {
 	$_SESSION['seid'] = $pigeon->guid();
 }
@@ -67,7 +67,7 @@ if(isset($_GET['s'])) {
 						if(password_verify($_POST['password'], $rs['password'])) {
 							if($error == '') {
 								mysqli_query($pigeon->conn, "UPDATE `users` SET `latest_ip`='{$login_ip}', `latest_time`='" . time() . "' WHERE `id`='{$rs['id']}'");
-								$pigeon->UpdateSessionId();
+								$pigeon->updateSessionId();
 								$_SESSION['user'] = $rs['username'];
 								$_SESSION['email'] = $rs['email'];
 								$_SESSION['token'] = $rs['token'];
@@ -105,7 +105,7 @@ if(isset($_GET['s'])) {
 							if(password_verify($_POST['password'], $rs['password'])) {
 								if($error == '') {
 									mysqli_query($pigeon->conn, "UPDATE `users` SET `latest_ip`='{$login_ip}', `latest_time`='" . time() . "' WHERE `id`='{$rs['id']}'");
-									$pigeon->UpdateSessionId();
+									$pigeon->updateSessionId();
 									$_SESSION['user'] = $rs['username'];
 									$_SESSION['email'] = $rs['email'];
 									$_SESSION['token'] = $rs['token'];
