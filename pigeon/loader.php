@@ -3,13 +3,13 @@
 // ini_set('session.cookie_secure', '1');
 ini_set('session.cookie_httponly', '1');
 ini_set('session.use_only_cookies', '1');
-SESSION_START();
 // 加载函数库
 include(ROOT . "/pigeon/function.php");
 include(ROOT . "/pigeon/parsedown.php");
 // 实例化 Pigeon
 $pigeon = new Pigeon();
 // 生成 SESSION ID
+$pigeon->CreateSession();
 if(!isset($_SESSION['seid'])) {
 	$_SESSION['seid'] = $pigeon->guid();
 }
@@ -44,7 +44,7 @@ if(isset($_GET['s'])) {
 					$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
 				}
 				if($pigeon->config['recaptcha_key'] !== '') {
-					if(!isset($_POST['g-recaptcha-response']) || !$pigeon->recaptcha_verify($_POST['g-recaptcha-response'])) {
+					if(!isset($_POST['g-recaptcha-response']) || !$pigeon->recaptchaVerify($_POST['g-recaptcha-response'])) {
 						$error = "Recaptcha 验证失败。";
 					}
 				}
@@ -67,6 +67,7 @@ if(isset($_GET['s'])) {
 						if(password_verify($_POST['password'], $rs['password'])) {
 							if($error == '') {
 								mysqli_query($pigeon->conn, "UPDATE `users` SET `latest_ip`='{$login_ip}', `latest_time`='" . time() . "' WHERE `id`='{$rs['id']}'");
+								$pigeon->UpdateSessionId();
 								$_SESSION['user'] = $rs['username'];
 								$_SESSION['email'] = $rs['email'];
 								$_SESSION['token'] = $rs['token'];
@@ -104,6 +105,7 @@ if(isset($_GET['s'])) {
 							if(password_verify($_POST['password'], $rs['password'])) {
 								if($error == '') {
 									mysqli_query($pigeon->conn, "UPDATE `users` SET `latest_ip`='{$login_ip}', `latest_time`='" . time() . "' WHERE `id`='{$rs['id']}'");
+									$pigeon->UpdateSessionId();
 									$_SESSION['user'] = $rs['username'];
 									$_SESSION['email'] = $rs['email'];
 									$_SESSION['token'] = $rs['token'];
@@ -152,7 +154,7 @@ if(isset($_GET['s'])) {
 					$error = "邮箱格式不正确。";
 				}
 				if($pigeon->config['recaptcha_key'] !== '') {
-					if(!isset($_POST['g-recaptcha-response']) || !$pigeon->recaptcha_verify($_POST['g-recaptcha-response'])) {
+					if(!isset($_POST['g-recaptcha-response']) || !$pigeon->recaptchaVerify($_POST['g-recaptcha-response'])) {
 						$error = "Recaptcha 验证失败。";
 					}
 				}
