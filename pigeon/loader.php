@@ -154,7 +154,7 @@ if(isset($_GET['s'])) {
 					$error = "邮箱格式不正确。";
 				}
 				if($pigeon->config['recaptcha_key'] !== '') {
-					if(!isset($_POST['g-recaptcha-response']) || !$pigeon->recaptchaVerify($_POST['g-recaptcha-response'])) {
+					if(!isset($_POST['g-recaptcha-response']) || !$pigeon->recaptcha_verify($_POST['g-recaptcha-response'])) {
 						$error = "Recaptcha 验证失败。";
 					}
 				}
