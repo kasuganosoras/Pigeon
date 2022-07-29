@@ -44,7 +44,7 @@ if(isset($_GET['s'])) {
 					$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
 				}
 				if($pigeon->config['recaptcha_key'] !== '') {
-					if(!isset($_POST['g-recaptcha-response']) || !$pigeon->recaptchaVerify($_POST['g-recaptcha-response'])) {
+					if(!isset($_POST['g-recaptcha-response']) || !$pigeon->recaptcha_verify($_POST['g-recaptcha-response'])) {
 						$error = "Recaptcha 验证失败。";
 					}
 				}
