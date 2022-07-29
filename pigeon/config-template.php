@@ -37,5 +37,8 @@ $pigeonConfig = Array(
 	// reCaptcha 谷歌验证码前端 Key，留空以禁用此功能
 	'recaptcha_key' => '{RECAPTCHA_KEY}',
 	// reCaptcha 的服务端 Key，如果上面留空了这里就是废的
-	'recaptcha_key_post' => '{RECAPTCHA_KEY_POST}'
+	'recaptcha_key_post' => '{RECAPTCHA_KEY_POST}',
+	
+	// 头像源镜像地址
+	
 );
