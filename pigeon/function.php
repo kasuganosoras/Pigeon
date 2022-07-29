@@ -57,7 +57,7 @@ class Pigeon {
 	 *
 	 */
 	public function updateSessionId() {
-		$new_session_id = session_create_id();
+		$new_session_id = session_regenerate_id();
 		$_SESSION['new_session_id'] = $new_session_id;
 		$_SESSION['destroyed'] = time();
 		session_commit();
