@@ -39,6 +39,9 @@ $pigeonConfig = Array(
 	// reCaptcha 的服务端 Key，如果上面留空了这里就是废的
 	'recaptcha_key_post' => '{RECAPTCHA_KEY_POST}',
 	
-	// 头像源镜像地址
-	
+	// 头像源镜像地址 例如
+	// https://gravatar.loli.net/avatar/
+	// https://sdn.geekzu.org/avatar/
+	// https://cravatar.cn/avatar/
+	'gravatar_mirror' => 'https://sdn.geekzu.org/avatar/'
 );
