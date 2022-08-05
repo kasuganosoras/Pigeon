@@ -3,6 +3,8 @@ global $pigeon, $error, $alert;
 if(!$pigeon) {
 	exit();
 }
+$_POST['username'] = "";
+$_POST['email'] = "";
 $temp_user = "";
 $temp_email = "";
 if(preg_match("/^[A-Za-z0-9\_\-]+$/", $_POST['username'])) {
