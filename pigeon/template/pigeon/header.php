@@ -61,7 +61,7 @@ if(!$pigeon) {
 					<?php
 					if(isset($_SESSION['user'])) {
 					?>
-					<p><textarea class="form-control newpost" placeholder="在想些什么？" id="newpost"></textarea></p>
+					<p><textarea data-chevereto-pup-target='newpost' class="form-control newpost" placeholder="在想些什么？" id="newpost"></textarea></p>
 					<table style="width: 100%;">
 						<tr>
 							<td style="width: 40%;">
@@ -74,6 +74,7 @@ if(!$pigeon) {
 							<td>
 								<!--<input type="checkbox" checked="checked" id="ispublic" style="margin-top: 8px;">&nbsp;&nbsp;公开消息（无需登录即可查看）</input>-->
 								<button class="btn btn-primary pull-right" onclick="newpost()"><i class="fa fa-twitter"></i>&nbsp;&nbsp;立即发布</button>
+								<button class="btn btn-default pull-right" data-chevereto-pup-trigger='test'  data-chevereto-pup-id ='newpost'><i class="fa fa-picture-o"></i>&nbsp;&nbsp;插入图片</button>
 							</td>
 						</tr>
 					</table>
