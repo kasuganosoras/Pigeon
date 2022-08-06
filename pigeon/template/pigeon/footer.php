@@ -18,7 +18,7 @@ if(!$pigeon) {
 					if(isset($_SESSION['user']) && isset($_SESSION['email'])) {
 						?>
 						<center>
-							<img src="https://secure.gravatar.com/avatar/<?php echo md5($_SESSION['email']); ?>?s=256" class="loginhead">
+							<img src="<?php echo $pigeon->config['gravatar_mirror'] . md5($_SESSION['email']); ?>?s=256" class="loginhead">
 						</center>
 						<h3><?php echo $_SESSION['user']; ?></h3>
 						<p>欢迎回来！<a href="?s=logout&seid=<?php echo isset($_SESSION['seid']) ? $_SESSION['seid'] : ""; ?>">[退出登录]</a></p>
@@ -326,6 +326,3 @@ if(!$pigeon) {
 		</script>
 	</body>
 </html>
-
-<script async id="chevereto-pup-src" src="https://imgchr.com/sdk/pup.js" data-url="https://imgchr.com/upload" data-auto-insert="markdown-embed-medium"></script>
-

@@ -3,8 +3,10 @@
 
 一个轻量化的留言板 / 记事本 / 社交系统 / 博客，没有明确的作用定义，一切都随心所欲。
 
-- 演示 demo：https://pigeon.ssr.wine/
+- 演示 demo：https://pigeon.ssr.wine/ (已关闭，请看下面这个)
 - 博客示例：https://tql.ink/
+
+> 上面链接为本人博客，可以测试发布内容，无意义内容请设置仅自己可见，或者发布后删除，避免影响版面整洁。
 
 ## 简介
 
@@ -51,6 +53,8 @@ php install.php
 根据提示进行配置即可。
 
 安装程序是没有界面的，请通过命令行执行 `install.php`，而不是通过网页访问它。
+
+> 如需手动安装（不使用安装程序），请 [点击这里阅读安装方法](https://github.com/kasuganosoras/Pigeon/wiki/Install#%E6%89%8B%E5%8A%A8%E5%AE%89%E8%A3%85-pigeon)
 
 ## 未来计划
 

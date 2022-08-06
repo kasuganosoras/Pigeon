@@ -4,6 +4,7 @@ $pigeonConfig = Array(
 	// 数据库配置
 	'mysql' => Array(
 		'host' => '{DB_HOST}',
+		// 数字
 		'port' => {DB_PORT},
 		'user' => '{DB_USER}',
 		'pass' => '{DB_PASS}',
@@ -11,9 +12,10 @@ $pigeonConfig = Array(
 	),
 	// SMTP 发送邮件设置
 	'smtp' => Array(
-		// 是否开启注册邮件验证
+		// 是否开启注册邮件验证 （true/false）
 		'enable' => {ENABLE_SMTP},
 		'host' => '{SMTP_HOST}',
+		// 数字
 		'port' => {SMTP_PORT},
 		'user' => '{SMTP_USER}',
 		'pass' => '{SMTP_PASS}',
@@ -31,8 +33,15 @@ $pigeonConfig = Array(
 	'enable_safemode' => true,
 	// 只对普通用户开启安全模式（设置为 false 则代表所有用户均无法使用 HTML）
 	'enable_foruser' => true,
+	// reCaptcha V2 版本
 	// reCaptcha 谷歌验证码前端 Key，留空以禁用此功能
 	'recaptcha_key' => '{RECAPTCHA_KEY}',
 	// reCaptcha 的服务端 Key，如果上面留空了这里就是废的
-	'recaptcha_key_post' => '{RECAPTCHA_KEY_POST}'
+	'recaptcha_key_post' => '{RECAPTCHA_KEY_POST}',
+	
+	// 头像源镜像地址 例如
+	// https://gravatar.loli.net/avatar/
+	// https://sdn.geekzu.org/avatar/
+	// https://cravatar.cn/avatar/
+	'gravatar_mirror' => 'https://sdn.geekzu.org/avatar/'
 );
