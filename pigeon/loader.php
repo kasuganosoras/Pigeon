@@ -1,6 +1,7 @@
 <?php
 // Cookie Secure
 // ini_set('session.cookie_secure', '1');
+error_reporting(E_ALL);
 ini_set('session.cookie_httponly', '1');
 ini_set('session.use_only_cookies', '1');
 // 加载函数库
@@ -10,26 +11,26 @@ include(ROOT . "/pigeon/parsedown.php");
 $pigeon = new Pigeon();
 // 生成 SESSION ID
 $pigeon->createSession();
-if(!isset($_SESSION['seid'])) {
+if (!isset($_SESSION['seid'])) {
 	$_SESSION['seid'] = $pigeon->guid();
 }
 // 判断传入参数 s
-if(isset($_GET['s'])) {
-	switch($_GET['s']) {
+if (isset($_GET['s']) && is_string($_GET['s'])) {
+	switch ($_GET['s']) {
 		case 'timeline':
-			if(isset($_GET['page']) && preg_match("/^[0-9]{0,6}$/", $_GET['page'])) {
+			if (isset($_GET['page']) && is_string($_GET['page']) && preg_match("/^[0-9]{0,6}$/", $_GET['page'])) {
 				$pigeon->before = null;
 				$pigeon->search = null;
-				if(isset($_GET['time']) && preg_match("/^[0-9\:\- ]+$/", $_GET['time'])) {
+				if (isset($_GET['time']) && is_string($_GET['time']) && preg_match("/^[0-9\:\- ]+$/", $_GET['time'])) {
 					$beforeTime = strtotime($_GET['time']);
 					$pigeon->before = $beforeTime ? $beforeTime : null;
 				}
-				if(isset($_GET['search']) && $_GET['search'] !== '') {
+				if (isset($_GET['search']) && is_string($_GET['search']) && $_GET['search'] !== '') {
 					$pigeon->search = mysqli_real_escape_string($pigeon->conn, $_GET['search']);
 				}
 				$pigeon->isLogin = (isset($_SESSION['user']) && $_SESSION['user'] !== '');
-				$pigeon->isAjax = (isset($_GET['ajax']) && $_GET['ajax'] == '1');
-				if(isset($_GET['user']) && preg_match("/^[A-Za-z0-9\_\-]{0,32}$/", $_GET['user'])) {
+				$pigeon->isAjax = (isset($_GET['ajax']) && is_string($_GET['ajax']) && $_GET['ajax'] == '1');
+				if (isset($_GET['user']) && is_string($_GET['user']) && preg_match("/^[A-Za-z0-9\_\-]{0,32}$/", $_GET['user'])) {
 					$pigeon->getTimeline($_GET['user'], true, Intval($_GET['page']));
 				} else {
 					$pigeon->getTimeline(null, true, Intval($_GET['page']));
@@ -39,21 +40,22 @@ if(isset($_GET['s'])) {
 		case 'login':
 			$error = "";
 			$alert = "danger";
-			if(isset($_POST['username']) && isset($_POST['password'])) {
-				if(!isset($_POST['seid']) || $_POST['seid'] !== $_SESSION['seid']) {
+			if (isset($_POST['username'], $_POST['password']) && is_string($_POST['username']) && is_string($_POST['password'])) {
+				if (!isset($_POST['seid']) || $_POST['seid'] !== $_SESSION['seid']) {
 					$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
 				}
-				if($pigeon->config['recaptcha_key'] !== '') {
-					if(!isset($_POST['g-recaptcha-response']) || !$pigeon->recaptcha_verify($_POST['g-recaptcha-response'])) {
+				if ($pigeon->config['recaptcha_key'] !== '') {
+					if (!isset($_POST['g-recaptcha-response']) || !$pigeon->recaptchaVerification($_POST['g-recaptcha-response'])) {
 						$error = "Recaptcha 验证失败。";
 					}
 				}
-				$username = mysqli_real_escape_string($pigeon->conn, $_POST['username']);
-				$login_ip = mysqli_real_escape_string($pigeon->conn, $_SERVER['REMOTE_ADDR']);
-				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `username`='{$username}'"));
-				if($rs) {
-					if($rs['status'] !== '200') {
-						switch($rs['status']) {
+				$userName = mysqli_real_escape_string($pigeon->conn, $_POST['username']);
+				$loginIp  = mysqli_real_escape_string($pigeon->conn, $_SERVER['REMOTE_ADDR']);
+				$curTime  = time();
+				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `username`='{$userName}'"));
+				if ($rs) {
+					if ($rs['status'] !== '200') {
+						switch ($rs['status']) {
 							case "401":
 								$error = "您需要先验证邮箱才能登陆，<a href='?s=resendmail&user={$rs['username']}'>点击重新发送邮件</a>。";
 								break;
@@ -64,34 +66,24 @@ if(isset($_GET['s'])) {
 								$error = "您的账号为异常状态，请联系管理员。";
 						}
 					} else {
-						if(password_verify($_POST['password'], $rs['password'])) {
-							if($error == '') {
-								mysqli_query($pigeon->conn, "UPDATE `users` SET `latest_ip`='{$login_ip}', `latest_time`='" . time() . "' WHERE `id`='{$rs['id']}'");
+						if (password_verify($_POST['password'], $rs['password'])) {
+							if ($error == '') {
+								mysqli_query($pigeon->conn, "UPDATE `users` SET `latest_ip`='{$loginIp}', `latest_time`='{$curTime}' WHERE `id`='{$rs['id']}'");
 								$pigeon->updateSessionId();
-								$_SESSION['user'] = $rs['username'];
+								$_SESSION['user']  = $rs['username'];
 								$_SESSION['email'] = $rs['email'];
 								$_SESSION['token'] = $rs['token'];
-								?>
-								<html>
-									<head>
-										<title>跳转中...</title>
-									</head>
-									<body>
-										<script>window.location='?';</script>
-									</body>
-								</html>
-								<?
-								exit;
+								exit("<html><head><title>跳转中...</title></head><body><script>window.location = '?';</script></body></html>");
 							}
 						} else {
 							$error = "用户名或密码错误。";
 						}
 					}
 				} else {
-					$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `email`='{$username}'"));
-					if($rs) {
-						if($rs['status'] !== '200') {
-							switch($rs['status']) {
+					$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `email`='{$userName}'"));
+					if ($rs) {
+						if ($rs['status'] !== '200') {
+							switch ($rs['status']) {
 								case "401":
 									$error = "您需要先验证邮箱才能登陆，<a href='?s=resendmail&user={$rs['username']}'>点击重新发送邮件</a>。";
 									break;
@@ -102,24 +94,14 @@ if(isset($_GET['s'])) {
 									$error = "您的账号为异常状态，请联系管理员。";
 							}
 						} else {
-							if(password_verify($_POST['password'], $rs['password'])) {
-								if($error == '') {
-									mysqli_query($pigeon->conn, "UPDATE `users` SET `latest_ip`='{$login_ip}', `latest_time`='" . time() . "' WHERE `id`='{$rs['id']}'");
+							if (password_verify($_POST['password'], $rs['password'])) {
+								if ($error == '') {
+									mysqli_query($pigeon->conn, "UPDATE `users` SET `latest_ip`='{$loginIp}', `latest_time`='{$curTime}' WHERE `id`='{$rs['id']}'");
 									$pigeon->updateSessionId();
-									$_SESSION['user'] = $rs['username'];
+									$_SESSION['user']  = $rs['username'];
 									$_SESSION['email'] = $rs['email'];
 									$_SESSION['token'] = $rs['token'];
-									?>
-									<html>
-										<head>
-											<title>跳转中...</title>
-										</head>
-										<body>
-											<script>window.location='?';</script>
-										</body>
-									</html>
-									<?
-									exit;
+									exit("<html><head><title>跳转中...</title></head><body><script>window.location = '?';</script></body></html>");
 								}
 							} else {
 								$error = "用户名或密码错误。";
@@ -137,48 +119,49 @@ if(isset($_GET['s'])) {
 		case 'register':
 			$error = "";
 			$alert = "danger";
-			if(!$pigeon->config['enable_registe']) {
+			if (!$pigeon->config['enable_registe']) {
 				$error = "抱歉，本站暂不开放注册。";
 			}
-			if(isset($_POST['username']) && isset($_POST['password']) && isset($_POST['email'])) {
-				if(!isset($_POST['seid']) || $_POST['seid'] !== $_SESSION['seid']) {
+			if (isset($_POST['username'], $_POST['password'], $_POST['email'])) {
+				if (!isset($_POST['seid']) || $_POST['seid'] !== $_SESSION['seid']) {
 					$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
 				}
-				if(!preg_match("/^[A-Za-z0-9\_\-]+$/", $_POST['username'])) {
+				if (!is_string($_GET['username']) || !preg_match("/^[A-Za-z0-9\_\-]+$/", $_POST['username'])) {
 					$error = "用户名不合法，只允许 <code>A-Z a-z 0-9 _ -</code>";
 				}
-				if(mb_strlen($_POST['password']) < 5 || mb_strlen($_POST['password']) > 32) {
+				if (!is_string($_GET['password']) || mb_strlen($_POST['password']) < 5 || mb_strlen($_POST['password']) > 32) {
 					$error = "密码最少为 5 个字符，最大为 32 个字符。";
 				}
-				if(!preg_match("/^[a-zA-Z0-9]+([-_.][a-zA-Z0-9]+)*@([a-zA-Z0-9]+[-.])+([a-z]{2,5})$/ims", $_POST['email'])) {
+				if (!is_string($_GET['email']) || !preg_match("/^[a-zA-Z0-9]+([-_.][a-zA-Z0-9]+)*@([a-zA-Z0-9]+[-.])+([a-z]{2,5})$/ims", $_POST['email'])) {
 					$error = "邮箱格式不正确。";
 				}
-				if($pigeon->config['recaptcha_key'] !== '') {
-					if(!isset($_POST['g-recaptcha-response']) || !$pigeon->recaptcha_verify($_POST['g-recaptcha-response'])) {
+				if ($pigeon->config['recaptcha_key'] !== '') {
+					if (!isset($_POST['g-recaptcha-response']) || !$pigeon->recaptchaVerification($_POST['g-recaptcha-response'])) {
 						$error = "Recaptcha 验证失败。";
 					}
 				}
-				$username = mysqli_real_escape_string($pigeon->conn, $_POST['username']);
-				$password = password_hash($_POST['password'], PASSWORD_BCRYPT);
-				$email = mysqli_real_escape_string($pigeon->conn, $_POST['email']);
-				$registe_ip = mysqli_real_escape_string($pigeon->conn, $_SERVER['REMOTE_ADDR']);
-				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `username`='{$username}'"));
-				$token = md5(sha1($username . $password . $email . mt_rand(0, 99999999) . time()));
-				if($rs) {
+				$userName = mysqli_real_escape_string($pigeon->conn, $_POST['username']);
+				$passWord = password_hash($_POST['password'], PASSWORD_BCRYPT);
+				$email    = mysqli_real_escape_string($pigeon->conn, $_POST['email']);
+				$regIp    = mysqli_real_escape_string($pigeon->conn, $_SERVER['REMOTE_ADDR']);
+				$curTime  = time();
+				$token    = md5(sha1($userName . $passWord . $email . mt_rand(0, 99999999) . time()));
+				$rs       = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `username`='{$userName}'"));
+				if ($rs) {
 					$error = "此用户名已被注册。";
 				}
 				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `email`='{$email}'"));
-				if($rs) {
+				if ($rs) {
 					$error = "此邮箱已被注册。";
 				}
-				if($error == '') {
-					$ust = '200';
+				if ($error == '') {
+					$userStatus = '200';
 					$needVerify = '';
-					if($pigeon->config['smtp']['enable']) {
-						$ust = '401';
-						$http_type = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) ? 'https://' : 'http://';
-						$siteurl = "{$http_type}{$_SERVER['HTTP_HOST']}/?s=checkmail&token={$token}";
-						$pigeon->sendMail($email, "验证您的 {$pigeon->config['sitename']} 账号", "<p>您好，感谢您注册 {$pigeon->config['sitename']}。</p><p>请点击以下链接验证您的账号：</p><p><a href='{$siteurl}'>{$siteurl}</a></p><p>如果以上链接无法点击，请复制到浏览器地址栏中打开。</p><p>如果您没有注册本站账号，请忽略此邮件。</p>");
+					if ($pigeon->config['smtp']['enable']) {
+						$userStatus = '401';
+						$httpType   = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) ? 'https://' : 'http://';
+						$siteUrl    = "{$httpType}{$_SERVER['HTTP_HOST']}/?s=checkmail&token={$token}";
+						$pigeon->sendMail($email, "验证您的 {$pigeon->config['sitename']} 账号", "<p>您好，感谢您注册 {$pigeon->config['sitename']}。</p><p>请点击以下链接验证您的账号：</p><p><a href='{$siteUrl}'>{$siteUrl}</a></p><p>如果以上链接无法点击，请复制到浏览器地址栏中打开。</p><p>如果您没有注册本站账号，请忽略此邮件。</p>");
 						$needVerify = "系统已发送一封邮件到您的邮箱，请点击邮件中的链接完成验证。";
 					}
 					mysqli_query($pigeon->conn, "INSERT INTO `users` (
@@ -194,15 +177,15 @@ if(isset($_GET['s'])) {
 						`status`,
 						`token`) VALUES (
 						NULL,
-						'{$username}',
-						'{$password}',
+						'{$userName}',
+						'{$passWord}',
 						'{$email}',
 						'user',
-						'{$registe_ip}',
-						'" . time() . "',
+						'{$regIp}',
+						'{$curTime}',
 						NULL,
 						NULL,
-						'{$ust}',
+						'{$userStatus}',
 						'{$token}'
 					)");
 					$alert = "success";
@@ -214,7 +197,7 @@ if(isset($_GET['s'])) {
 			$pigeon->getTemplate("footer");
 			break;
 		case "logout":
-			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+			if (!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
 				echo "<script>window.location='?';</script>";
 				exit;
 			}
@@ -222,26 +205,17 @@ if(isset($_GET['s'])) {
 			unset($_SESSION['email']);
 			unset($_SESSION['token']);
 			unset($_SESSION['seid']);
-			?>
-			<html>
-				<head>
-					<title>跳转中...</title>
-				</head>
-				<body>
-					<script>window.location='?';</script>
-				</body>
-			</html>
-			<?
+			exit("<html><head><title>跳转中...</title></head><body><script>window.location = '?';</script></body></html>");
 			break;
 		case "newpost":
-			if(isset($_POST['content']) && isset($_POST['ispublic'])) {
+			if (isset($_POST['content'], $_POST['ispublic']) && is_string($_POST['content']) && is_string($_POST['ispublic'])) {
 				$apiUser = false;
-				if(isset($_GET['token']||!isset($_SESSION['user'])) {
-					if(isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
+				if (isset($_GET['token']) || !isset($_SESSION['user'])) {
+					if (isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
 						$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
 						$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
-						if($rs) {
-							$_SESSION['user'] = $rs['username'];
+						if ($rs) {
+							$_SESSION['user']  = $rs['username'];
 							$_SESSION['email'] = $rs['email'];
 							$apiUser = true;
 						} else {
@@ -251,32 +225,35 @@ if(isset($_GET['s'])) {
 						$pigeon->Exception("请先登录。");
 					}
 				}
-				if(!$apiUser) {
-					if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+				if (!$apiUser) {
+					if (!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
 						$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
 					}
 				}
-				if($_POST['ispublic'] !== '0' && $_POST['ispublic'] !== '1' && $_POST['ispublic'] !== '2') {
+				if ($_POST['ispublic'] !== '0' && $_POST['ispublic'] !== '1' && $_POST['ispublic'] !== '2') {
 					$pigeon->Exception("Bad Request");
 				}
+				$isPub   = mysqli_real_escape_string($pigeon->conn, $_POST['ispublic']);
 				$content = mysqli_real_escape_string($pigeon->conn, $_POST['content']);
-				$textlen = mb_strlen($content);
-				if($textlen < 1 || $textlen > 1000000) {
-					$pigeon->Exception("最少输入 1 个字符，最大输入 100 万个字符，当前已输入：{$textlen}。");
+				$logUser = mysqli_real_escape_string($pigeon->conn, $_SESSION['user']);
+				$textLen = mb_strlen($content);
+				$curTime = time();
+				if ($textLen < 1 || $textLen > 1000000) {
+					$pigeon->Exception("最少输入 1 个字符，最大输入 100 万个字符，当前已输入：{$textLen}。");
 				}
-				mysqli_query($pigeon->conn, "INSERT INTO `posts` (`id`, `content`, `author`, `time`, `public`) VALUES (NULL, '{$content}', '{$_SESSION['user']}', '" . time() . "', '{$_POST['ispublic']}')");
+				mysqli_query($pigeon->conn, "INSERT INTO `posts` (`id`, `content`, `author`, `time`, `public`) VALUES (NULL, '{$content}', '{$logUser}', '{$curTime}', '{$isPub}')");
 				echo "Successful";
 			}
 			break;
 		case "deletepost":
-			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
+			if (isset($_GET['id']) && is_string($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
 				$apiUser = false;
-				if(!isset($_SESSION['user'])) {
-					if(isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
+				if (!isset($_SESSION['user'])) {
+					if (isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
 						$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
 						$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
-						if($rs) {
-							$_SESSION['user'] = $rs['username'];
+						if ($rs) {
+							$_SESSION['user']  = $rs['username'];
 							$_SESSION['email'] = $rs['email'];
 							$apiUser = true;
 						} else {
@@ -286,17 +263,18 @@ if(isset($_GET['s'])) {
 						$pigeon->Exception("请先登录。");
 					}
 				}
-				if(!$apiUser) {
-					if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+				if (!$apiUser) {
+					if (!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
 						$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
 					}
 				}
-				if(!$pigeon->isAdmin($_SESSION['user'])) {
+				if (!$pigeon->isAdmin($_SESSION['user'])) {
 					$pigeon->Exception("请求被拒绝。");
 				}
-				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `posts` WHERE `id`='{$_GET['id']}'"));
-				if($rs) {
-					mysqli_query($pigeon->conn, "DELETE FROM `posts` WHERE `id`='{$_GET['id']}'");
+				$id = mysqli_real_escape_string($pigeon->conn, $_GET['id']);
+				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `posts` WHERE `id`='{$id}'"));
+				if ($rs) {
+					mysqli_query($pigeon->conn, "DELETE FROM `posts` WHERE `id`='{$id}'");
 					echo "Successful";
 				} else {
 					$pigeon->Exception("内容不存在。");
@@ -304,14 +282,15 @@ if(isset($_GET['s'])) {
 			}
 			break;
 		case "changepublic":
-			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id']) && isset($_GET['newstatus']) && preg_match("/^[0-9]{1}$/", $_GET['newstatus'])) {
+			if (isset($_GET['id'], $_GET['newstatus']) && is_string($_GET['id']) && is_string($_GET['newstatus']) &&
+				preg_match("/^[0-9]{0,10}$/", $_GET['id']) && preg_match("/^[0-9]{1}$/", $_GET['newstatus'])) {
 				$apiUser = false;
-				if(!isset($_SESSION['user'])) {
-					if(isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
+				if (!isset($_SESSION['user'])) {
+					if (isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
 						$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
 						$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
-						if($rs) {
-							$_SESSION['user'] = $rs['username'];
+						if ($rs) {
+							$_SESSION['user']  = $rs['username'];
 							$_SESSION['email'] = $rs['email'];
 							$apiUser = true;
 						} else {
@@ -321,20 +300,22 @@ if(isset($_GET['s'])) {
 						$pigeon->Exception("请先登录。");
 					}
 				}
-				if(!$apiUser) {
-					if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+				if (!$apiUser) {
+					if (!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
 						$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
 					}
 				}
-				if(!$pigeon->isAdmin($_SESSION['user'])) {
+				if (!$pigeon->isAdmin($_SESSION['user'])) {
 					$pigeon->Exception("请求被拒绝。");
 				}
-				if($_GET['newstatus'] !== "0" && $_GET['newstatus'] !== "1" && $_GET['newstatus'] !== "2") {
+				if ($_GET['newstatus'] !== "0" && $_GET['newstatus'] !== "1" && $_GET['newstatus'] !== "2") {
 					$pigeon->Exception("请求被拒绝。");
 				}
+				$id = mysqli_real_escape_string($pigeon->conn, $_GET['id']);
+				$pb = mysqli_real_escape_string($pigeon->conn, $_GET['newstatus']);
 				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `posts` WHERE `id`='{$_GET['id']}'"));
-				if($rs) {
-					mysqli_query($pigeon->conn, "UPDATE `posts` SET `public`='{$_GET['newstatus']}' WHERE `id`='{$_GET['id']}'");
+				if ($rs) {
+					mysqli_query($pigeon->conn, "UPDATE `posts` SET `public`='{$pb}' WHERE `id`='{$id}'");
 					echo "Successful";
 				} else {
 					$pigeon->Exception("内容不存在。");
@@ -342,18 +323,18 @@ if(isset($_GET['s'])) {
 			}
 			break;
 		case "resendmail":
-			if(isset($_GET['user']) && preg_match("/^[A-Za-z0-9\_\-]{0,32}$/", $_GET['user'])) {
-				$alert = "danger";
-				$error = "";
-				$username = mysqli_real_escape_string($pigeon->conn, $_GET['user']);
-				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `username`='{$username}'"));
-				if($rs) {
-					if($rs['status'] !== '401') {
+			if (isset($_GET['user']) && is_string($_GET['user']) && preg_match("/^[A-Za-z0-9\_\-]{0,32}$/", $_GET['user'])) {
+				$alert    = "danger";
+				$error    = "";
+				$userName = mysqli_real_escape_string($pigeon->conn, $_GET['user']);
+				$rs       = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `username`='{$userName}'"));
+				if ($rs) {
+					if ($rs['status'] !== '401') {
 						$error = "此账号已经通过验证。";
 					} else {
-						$http_type = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) ? 'https://' : 'http://';
-						$siteurl = "{$http_type}{$_SERVER['HTTP_HOST']}/?s=checkmail&token={$rs['token']}";
-						$pigeon->sendMail($rs['email'], "验证您的 {$pigeon->config['sitename']} 账号", "<p>您好，感谢您注册 {$pigeon->config['sitename']}。</p><p>请点击以下链接验证您的账号：</p><p><a href='{$siteurl}'>{$siteurl}</a></p><p>如果以上链接无法点击，请复制到浏览器地址栏中打开。</p><p>如果您没有注册本站账号，请忽略此邮件。</p>");
+						$httpType = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) ? 'https://' : 'http://';
+						$siteUrl  = "{$httpType}{$_SERVER['HTTP_HOST']}/?s=checkmail&token={$rs['token']}";
+						$pigeon->sendMail($rs['email'], "验证您的 {$pigeon->config['sitename']} 账号", "<p>您好，感谢您注册 {$pigeon->config['sitename']}。</p><p>请点击以下链接验证您的账号：</p><p><a href='{$siteUrl}'>{$siteUrl}</a></p><p>如果以上链接无法点击，请复制到浏览器地址栏中打开。</p><p>如果您没有注册本站账号，请忽略此邮件。</p>");
 						$error = "系统已发送一封邮件到您的邮箱，请点击邮件中的链接完成验证。";
 						$alert = "success";
 					}
@@ -366,13 +347,13 @@ if(isset($_GET['s'])) {
 			}
 			break;
 		case "checkmail":
-			if(isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
+			if (isset($_GET['token']) && is_string($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
 				$alert = "danger";
 				$error = "";
 				$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
-				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
-				if($rs) {
-					if($rs['status'] !== '401') {
+				$rs    = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
+				if ($rs) {
+					if ($rs['status'] !== '401') {
 						$error = "无效的验证链接。";
 					} else {
 						mysqli_query($pigeon->conn, "UPDATE `users` SET `status`='200' WHERE `id`='{$rs['id']}'");
@@ -388,11 +369,11 @@ if(isset($_GET['s'])) {
 			}
 			break;
 		case "msg":
-			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
+			if (isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
 				$message = $pigeon->getMessageById($_GET['id']);
 				$pigeon->isAjax = false;
 				$pigeon->isLogin = (isset($_SESSION['user']) && $_SESSION['user'] !== '');
-				if($message) {
+				if ($message) {
 					$pigeon->getTemplate("header");
 					echo $message;
 					$pigeon->getTemplate("footer");
@@ -405,32 +386,33 @@ if(isset($_GET['s'])) {
 			}
 			break;
 		case "getmsg":
-			if(!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+			if (!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
 				$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
 			}
-			if(isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
+			if (isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
 				$message = $pigeon->getRawMessageById($_GET['id']);
 				$pigeon->isAjax = false;
 				$pigeon->isLogin = (isset($_SESSION['user']) && $_SESSION['user'] !== '');
-				if($message) {
-					echo json_encode(Array(
+				if ($message) {
+					echo json_encode([
 						'content' => $message['content'],
-						'public' => $message['public'],
-						'author' => $message['author'],
-						'time' => $message['time']
-					));
+						'public'  => $message['public'],
+						'author'  => $message['author'],
+						'time'    => $message['time']
+					]);
+					exit;
 				} else {
 					$pigeon->Exception("未找到指定的消息内容，该消息已被删除或者您暂时没有权限查看。");
 				}
 			}
 			break;
 		case "editpost":
-			if(isset($_GET['id']) && preg_match("/^[0-9]{1,10}$/", $_GET['id'])) {
-				if(!isset($_SESSION['user'])) {
-					if(isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
+			if (isset($_GET['id']) && preg_match("/^[0-9]{1,10}$/", $_GET['id'])) {
+				if (!isset($_SESSION['user'])) {
+					if (isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
 						$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
 						$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
-						if($rs) {
+						if ($rs) {
 							$_SESSION['user'] = $rs['user'];
 							$_SESSION['email'] = $rs['email'];
 						} else {
@@ -439,20 +421,20 @@ if(isset($_GET['s'])) {
 					}
 					$pigeon->Exception("请先登录。");
 				}
-				if($_POST['ispublic'] !== '0' && $_POST['ispublic'] !== '1' && $_POST['ispublic'] !== '2') {
+				if ($_POST['ispublic'] !== '0' && $_POST['ispublic'] !== '1' && $_POST['ispublic'] !== '2') {
 					$pigeon->Exception("Bad Request");
 				}
 				$id = mysqli_real_escape_string($pigeon->conn, $_GET['id']);
 				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `posts` WHERE `id`='{$id}'"));
-				if($rs) {
-					if($rs['author'] !== $_SESSION['user'] && !$pigeon->isAdmin($_SESSION['user'])) {
+				if ($rs) {
+					if ($rs['author'] !== $_SESSION['user'] && !$pigeon->isAdmin($_SESSION['user'])) {
 						$pigeon->Exception("未找到指定的消息内容，该消息已被删除或者您暂时没有权限查看。");
 					}
 					$content = mysqli_real_escape_string($pigeon->conn, $_POST['content']);
-					$public = mysqli_real_escape_string($pigeon->conn, $_POST['ispublic']);
-					$textlen = mb_strlen($content);
-					if($textlen < 1 || $textlen > 1000000) {
-						$pigeon->Exception("最少输入 1 个字符，最大输入 100 万个字符，当前已输入：{$textlen}。");
+					$public  = mysqli_real_escape_string($pigeon->conn, $_POST['ispublic']);
+					$textLen = mb_strlen($content);
+					if ($textLen < 1 || $textLen > 1000000) {
+						$pigeon->Exception("最少输入 1 个字符，最大输入 100 万个字符，当前已输入：{$textLen}。");
 					}
 					mysqli_query($pigeon->conn, "UPDATE `posts` SET `content`='{$content}',`public`='{$public}' WHERE `id`='{$id}'");
 					echo "Successful";
@@ -466,17 +448,17 @@ if(isset($_GET['s'])) {
 	// 默认首页
 	$pigeon->before = null;
 	$pigeon->search = null;
-	if(isset($_GET['time']) && preg_match("/^[0-9\:\- ]+$/", $_GET['time'])) {
+	if (isset($_GET['time']) && preg_match("/^[0-9\:\- ]+$/", $_GET['time'])) {
 		$beforeTime = strtotime($_GET['time']);
 		$pigeon->before = $beforeTime ? $beforeTime : null;
 	}
-	if(isset($_GET['search']) && $_GET['search'] !== '') {
+	if (isset($_GET['search']) && $_GET['search'] !== '') {
 		$pigeon->search = mysqli_real_escape_string($pigeon->conn, $_GET['search']);
 	}
 	$pigeon->isAjax = false;
 	$pigeon->isLogin = (isset($_SESSION['user']) && $_SESSION['user'] !== '');
 	$pigeon->getTemplate("header");
-	if(isset($_GET['user']) && preg_match("/^[A-Za-z0-9\_\-]{0,32}$/", $_GET['user'])) {
+	if (isset($_GET['user']) && preg_match("/^[A-Za-z0-9\_\-]{0,32}$/", $_GET['user'])) {
 		$pigeon->getTimeline($_GET['user'], true, 1);
 	} else {
 		$pigeon->getTimeline(null, true, 1);
