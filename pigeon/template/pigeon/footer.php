@@ -18,7 +18,7 @@ if(!$pigeon) {
 					if(isset($_SESSION['user']) && isset($_SESSION['email'])) {
 						?>
 						<center>
-							<img src="https://secure.gravatar.com/avatar/<?php echo md5($_SESSION['email']); ?>?s=256" class="loginhead">
+							<img src="<?php echo $pigeon->config['gravatar_mirror'] . md5($_SESSION['email']); ?>?s=256" class="loginhead">
 						</center>
 						<h3><?php echo $_SESSION['user']; ?></h3>
 						<p>欢迎回来！<a href="?s=logout&seid=<?php echo isset($_SESSION['seid']) ? $_SESSION['seid'] : ""; ?>">[退出登录]</a></p>
@@ -58,17 +58,27 @@ if(!$pigeon) {
 					<p>&copy; <?php echo date("Y"); ?> <?php echo $pigeon->config['sitename']; ?> | Powered by <a href="https://github.com/kasuganosoras/Pigeon" target="_blank">Pigeon</a></p>
 				</div>
 		</div>
+		<script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+		<script src="https://imgchr.com/sdk/pup.js" data-url="https://imgchr.com/upload" data-auto-insert="markdown-embed-medium" async id="chevereto-pup-src"></script>
+		<script src="pigeon/template/<?php echo $pigeon->config['template']; ?>/js/highlight.pack.js"></script>
+		<?php
+		if(isset($_GET['s']) && ($_GET['s'] == 'login' || $_GET['s'] == 'register') && $pigeon->config['recaptcha_key'] !== '') {
+			echo '<script src="https://recaptcha.net/recaptcha/api.js" async defer></script>';
+		}
+		?>
 		<script type="text/javascript">
 			var seid = '<?php echo isset($_SESSION['seid']) ? $_SESSION['seid'] : ""; ?>';
-			var auto_refresh = true;
+			var autoRefresh = true;
 			var ptime = '';
 			var psearch = '';
 			var puser = "<?php $user = isset($_GET['user']) ? $_GET['user'] : ""; echo str_replace('"', "", $user); ?>";
 			var storage = '<?php echo $_SESSION['ids']; ?>';
-			var dismiss_success = '<div class="alert alert-success alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
-			var dismiss_danger = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
-			var isblur = false;
-			var pagetitle = document.title;
+			var dismissSuccess = '<div class="alert alert-success alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
+			var dismissDanger = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
+			var isBlur = false;
+			var pageTitle = document.title;
 			hljs.initHighlightingOnLoad();
 			function setTime() {
 				ptime = $("#time").val();
@@ -99,8 +109,8 @@ if(!$pigeon) {
 				});
 			}
 			function RefreshHome() {
-				current_page = '1';
-				auto_refresh = true;
+				currentPage = '1';
+				autoRefresh = true;
 				var htmlobj = $.ajax({
 					type: 'GET',
 					url: "?s=timeline",
@@ -119,8 +129,8 @@ if(!$pigeon) {
 						var ids = htmlobj.getResponseHeader('ids');
 						if(storage != ids) {
 							$("#pagecontent").html(htmlobj.responseText);
-							if(isblur && storage != '') {
-								document.title = "[新消息] " + pagetitle;
+							if(isBlur && storage != '') {
+								document.title = "[新消息] " + pageTitle;
 							}
 							storage = ids;
 							$('pre code').each(function(i, block) {
@@ -136,8 +146,8 @@ if(!$pigeon) {
 				});
 			}
 			function loadMore() {
-				auto_refresh = false;
-				var newPage = parseInt(current_page) + 1;
+				autoRefresh = false;
+				var newPage = parseInt(currentPage) + 1;
 				var htmlobj = $.ajax({
 					type: 'GET',
 					url: "?s=timeline",
@@ -155,7 +165,7 @@ if(!$pigeon) {
 					success: function() {
 						$(".loadMore").css({display:'none'});
 						$("#pagecontent").append(htmlobj.responseText);
-						current_page = newPage;
+						currentPage = newPage;
 						$('.message img').click(function() {
 							imgsrc.src = this.src;
 							$("#imgscan").fadeIn();
@@ -165,7 +175,7 @@ if(!$pigeon) {
 				});
 			}
 			function deletepost(id) {
-				auto_refresh = false;
+				autoRefresh = false;
 				var htmlobj = $.ajax({
 					type: 'GET',
 					data: {
@@ -187,7 +197,7 @@ if(!$pigeon) {
 				});
 			}
 			function changepublic(id, newstatus) {
-				auto_refresh = false;
+				autoRefresh = false;
 				var htmlobj = $.ajax({
 					type: 'GET',
 					data: {
@@ -210,11 +220,11 @@ if(!$pigeon) {
 				});
 			}
 			function SuccessMsg(text) {
-				$("#alert_success").html(dismiss_success + text + "</div>");
+				$("#alert_success").html(dismissSuccess + text + "</div>");
 				$("#alert_success").fadeIn(500);
 			}
 			function ErrorMsg(text) {
-				$("#alert_danger").html(dismiss_danger + text + "</div>");
+				$("#alert_danger").html(dismissDanger + text + "</div>");
 				$("#alert_danger").fadeIn(500);
 			}
 			/* Pigeon 1.0.170 Update start */
@@ -269,7 +279,7 @@ if(!$pigeon) {
 									var public_2 = ' selected="selected"';
 									break;
 							}
-							showmsg('<p>请输入内容</p><p><textarea class="form-control newpost editpost" placeholder="在想些什么？" id="editpost">' + data.content.replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;").replace(" ", "&nbsp;") + '</textarea></p><table style="width: 100%;margin-bottom: 12px;"><tr><td style="width: 40%;"><select class="form-control" id="edit_ispublic"><option value="0"' + public_0 + '>所有人可见</option><option value="1"' + public_1 + '>登录后可见</option><option value="2"' + public_2 + '>仅自己可见</option></select></td><td><button class="btn btn-primary pull-right" onclick="submitedit()"><i class="fa fa-twitter"></i>&nbsp;&nbsp;保存修改</button></td></tr></table>');
+							showmsg('<p>请输入内容</p><p><textarea class="form-control newpost editpost" placeholder="在想些什么？" id="editpost">' + data.content + '</textarea></p><table style="width: 100%;margin-bottom: 12px;"><tr><td style="width: 40%;"><select class="form-control" id="edit_ispublic"><option value="0"' + public_0 + '>所有人可见</option><option value="1"' + public_1 + '>登录后可见</option><option value="2"' + public_2 + '>仅自己可见</option></select></td><td><button class="btn btn-primary pull-right" onclick="submitedit()"><i class="fa fa-twitter"></i>&nbsp;&nbsp;保存修改</button></td></tr></table>');
 						} catch(e) {
 							ErrorMsg("错误：" + e.message);
 						}
@@ -304,7 +314,7 @@ if(!$pigeon) {
 			/* Update end */
 			window.onload = function() {
 				setInterval(function() {
-					if(auto_refresh) {
+					if(autoRefresh) {
 						RefreshHome();
 					}
 				}, 10000);
@@ -317,11 +327,11 @@ if(!$pigeon) {
 				});
 			}
 			window.onblur = function() {
-				isblur = true;
+				isBlur = true;
 			}
 			window.onfocus = function() {
-				isblur = false;
-				document.title = pagetitle;
+				isBlur = false;
+				document.title = pageTitle;
 			}
 		</script>
 	</body>
