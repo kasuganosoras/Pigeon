@@ -1,7 +1,6 @@
 <?php
 // Cookie Secure
 // ini_set('session.cookie_secure', '1');
-error_reporting(E_ALL);
 ini_set('session.cookie_httponly', '1');
 ini_set('session.use_only_cookies', '1');
 // 加载函数库
