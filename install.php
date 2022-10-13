@@ -88,7 +88,7 @@ if ($enable_registe == "y") {
 			$input = trim(fgets(STDIN));
 			$input = empty($input) ? "localhost" : $input;
 			// if match hostname
-			if (!preg_match("/^[a-zA-Z0-9_\-\.]+$/", $smtp_host)) {
+			if (!preg_match("/^[a-zA-Z0-9_\-\.]+$/", $input)) {
 				PrintLn("SMTP 地址错误，示例：smtp.exmail.com");
 			} else {
 				$smtp_host = $input;
