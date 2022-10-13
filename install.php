@@ -257,7 +257,7 @@ if (mysqli_connect_errno()) {
 	}
 	$username   = mysqli_real_escape_string($conn, $admin_user);
 	$password   = password_hash($admin_pass, PASSWORD_BCRYPT);
-	$email      = mysqli_real_escape_string($conn, $admin_mail);
+	$email      = mysqli_real_escape_string($conn, $admin_email);
 	$registe_ip = mysqli_real_escape_string($conn, "127.0.0.1");
 	$token      = md5(sha1($username . $password . $email . mt_rand(0, 99999999) . time()));
 	$reg_time   = time();
