@@ -125,13 +125,13 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 				if (!isset($_POST['seid']) || $_POST['seid'] !== $_SESSION['seid']) {
 					$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
 				}
-				if (!is_string($_GET['username']) || !preg_match("/^[A-Za-z0-9\_\-]+$/", $_POST['username'])) {
+				if (!is_string($_POST['username']) || !preg_match("/^[A-Za-z0-9\_\-]+$/", $_POST['username'])) {
 					$error = "用户名不合法，只允许 <code>A-Z a-z 0-9 _ -</code>";
 				}
-				if (!is_string($_GET['password']) || mb_strlen($_POST['password']) < 5 || mb_strlen($_POST['password']) > 32) {
+				if (!is_string($_POST['password']) || mb_strlen($_POST['password']) < 5 || mb_strlen($_POST['password']) > 32) {
 					$error = "密码最少为 5 个字符，最大为 32 个字符。";
 				}
-				if (!is_string($_GET['email']) || !preg_match("/^[a-zA-Z0-9]+([-_.][a-zA-Z0-9]+)*@([a-zA-Z0-9]+[-.])+([a-z]{2,5})$/ims", $_POST['email'])) {
+				if (!is_string($_POST['email']) || !preg_match("/^[a-zA-Z0-9]+([-_.][a-zA-Z0-9]+)*@([a-zA-Z0-9]+[-.])+([a-z]{2,5})$/ims", $_POST['email'])) {
 					$error = "邮箱格式不正确。";
 				}
 				if ($pigeon->config['recaptcha_key'] !== '') {
