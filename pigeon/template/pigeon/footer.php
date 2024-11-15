@@ -73,7 +73,7 @@ if(!$pigeon) {
 			var autoRefresh = true;
 			var ptime = '';
 			var psearch = '';
-			var puser = "<?php $user = isset($_GET['user']) ? $_GET['user'] : ""; echo str_replace('"', "", $user); ?>";
+			var puser = "<?php $user = (isset($_GET['user']) && preg_match("/^[A-Za-z0-9\_\-]{0,32}$/", $_GET['user'])) ? $_GET['user'] : ""; echo str_replace('"', "", $user); ?>";
 			var storage = '<?php echo $_SESSION['ids']; ?>';
 			var dismissSuccess = '<div class="alert alert-success alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
 			var dismissDanger = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
