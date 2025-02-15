@@ -1351,13 +1351,15 @@ class Parsedown
         {
             return;
         }
-
+	    
+	$imgUrl = $Link['element']['attributes']['href'];
+        $token  = sha1($imgUrl . $_SESSION['seid']);
         $Inline = array(
             'extent' => $Link['extent'] + 1,
             'element' => array(
                 'name' => 'img',
                 'attributes' => array(
-                    'src' => 'pigeon/imgproxy/?url=' . urlencode(base64_encode($Link['element']['attributes']['href'])),
+                    'src' => sprintf('pigeon/imgproxy/?url=%s&token=%s', urlencode(base64_encode($imgUrl)), $token),
                     'alt' => $Link['element']['handler']['argument'],
                 ),
                 'autobreak' => true,
