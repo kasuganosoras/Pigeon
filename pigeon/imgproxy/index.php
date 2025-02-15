@@ -71,9 +71,7 @@ $cache_list = Array(
 	'gif' => true
 );
 if(!isset($_GET['url'], $_GET['token'])) {
-	Header("Content-type: image/png", true, 502);
-	readfile("502.png");
-	exit;
+	exit("403 Forbidden");
 }
 $url = base64_decode($_GET['url']);
 $token = $_GET['token'];
@@ -82,6 +80,18 @@ if($token !== sha1($url . $_SESSION['seid'])) {
 }
 // 防止死循环请求
 if(stristr($url, "imgproxy")) {
+	exit("403 Forbidden");
+}
+// 防止请求非法域名/内网IP
+$host = parse_url($url, PHP_URL_HOST);
+if(!isset($host) || empty($host)) {
+	exit("403 Forbidden");
+}
+// 先判断是否是 IP，如果不是就先解析域名
+if(!filter_var($host, FILTER_VALIDATE_IP)) {
+	$host = gethostbyname($host);
+}
+if(!filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
 	exit("403 Forbidden");
 }
 // 最大缓存文件数量
