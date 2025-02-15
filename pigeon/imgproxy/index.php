@@ -3,6 +3,7 @@
 error_reporting(0);
 set_time_limit(6);
 OB_START();
+SESSION_START();
 function curl_request($url, $post = '', $cookie = '', $headers = '', $returnHeader = 0) {
     $curl = curl_init();
     curl_setopt($curl, CURLOPT_URL, $url);
@@ -69,12 +70,16 @@ $cache_list = Array(
 	'bmp' => true,
 	'gif' => true
 );
-if(!isset($_GET['url'])) {
+if(!isset($_GET['url'], $_GET['token'])) {
 	Header("Content-type: image/png", true, 502);
 	readfile("502.png");
 	exit;
 }
 $url = base64_decode($_GET['url']);
+$token = $_GET['token'];
+if($token !== sha1($url . $_SESSION['seid'])) {
+	exit("403 Forbidden");
+}
 // 防止死循环请求
 if(stristr($url, "imgproxy")) {
 	exit("403 Forbidden");
