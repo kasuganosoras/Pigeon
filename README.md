@@ -55,6 +55,7 @@ chown -R www:www /path/to/your/webroot
 > 如需手动安装（不使用安装程序），请 [点击这里阅读安装方法](https://github.com/kasuganosoras/Pigeon/wiki/Install#%E6%89%8B%E5%8A%A8%E5%AE%89%E8%A3%85-pigeon)
 
 ## 未来计划
+~应该永远不会实现~
 
 - [x] 管理员后台系统（已实现）
 - [ ] 支持 OAuth 登录
@@ -73,8 +74,3 @@ chown -R www:www /path/to/your/webroot
 
 本项目使用 MIT 协议开源，您可以在遵守协议的情况下自由使用本项目。
 
-## 捐助开发者
-
-如果你觉得这个项目对你有帮助，欢迎赞助我
-
-![img](https://i.imgur.com/1EuGD9o.png)
