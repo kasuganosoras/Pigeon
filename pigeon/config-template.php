@@ -27,7 +27,7 @@ $pigeonConfig = [
 	// 站点介绍（显示在网页上）
 	'description'        => '{DESCRIPTION}',
 	// 允许注册（true/false）
-	'enable_registe'     => {ENABLE_REGISTE},
+	'enable_register'    => {ENABLE_REGISTER},
 	// 开启安全模式（开启后将不会解析 Markdown 里的 HTML）
 	'enable_safemode'    => true,
 	// 只对普通用户开启安全模式（设置为 false 则代表所有用户均无法使用 HTML）

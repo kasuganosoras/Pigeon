@@ -2,10 +2,16 @@
 error_reporting(E_ALL);
 SESSION_START();
 define("ROOT", str_replace("\\", "/", __DIR__));
+// 延长超时时间
+set_time_limit(0);
+ini_set('max_execution_time', 0);
+ini_set('max_input_time', 0);
+
 if (!file_exists(ROOT . "/pigeon/config.php")) {
-	echo "请先在命令行下执行 install.php 进行安装。";
+	echo "请先完成安装向导。";
 	exit;
 }
+
 if (!isset($_SESSION['user']) || $_SESSION['user'] == '') {
 	echo "<html><head><title>跳转中...</title></head><body><script>window.location='/';</script></body></html>";
 	exit;
@@ -17,8 +23,9 @@ class PigeonAdmin
 	{
 		global $pigeon;
 		if ($pigeon->conn) {
-			$userName = mysqli_real_escape_string($pigeon->conn, $userName);
-			$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `username`='{$userName}'"));
+			$stmt = $pigeon->conn->prepare("SELECT * FROM `users` WHERE `username`=:username");
+			$stmt->execute(array(':username' => $userName));
+			$rs = $stmt->fetch(PDO::FETCH_ASSOC);
 			return $rs ? ($rs['permission'] == 'root' || $rs['permission'] == 'admin') : false;
 		} else {
 			return false;
@@ -28,8 +35,9 @@ class PigeonAdmin
 	{
 		global $pigeon;
 		if ($pigeon->conn) {
-			$userName = mysqli_real_escape_string($pigeon->conn, $userName);
-			$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `username`='{$userName}'"));
+			$stmt = $pigeon->conn->prepare("SELECT * FROM `users` WHERE `username`=:username");
+			$stmt->execute(array(':username' => $userName));
+			$rs = $stmt->fetch(PDO::FETCH_ASSOC);
 			return $rs ? ($rs['permission'] == 'root') : false;
 		} else {
 			return false;
@@ -98,13 +106,14 @@ if (!$padmin->isAdmin($_SESSION['user'])) {
 }
 if (isset($_GET['s'])) {
 	switch ($_GET['s']) {
-		case "getuser":
+		case "fetchUser":
 			if (!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
 				$padmin->errorMsg("CSRF 验证失败，请尝试重新登录。");
 			}
 			if (isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
-				$uid = mysqli_real_escape_string($pigeon->conn, $_GET['id']);
-				$rs  = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `id`='{$uid}'"));
+				$stmt = $pigeon->conn->prepare("SELECT * FROM `users` WHERE `id`=:id");
+				$stmt->execute(array(':id' => $_GET['id']));
+				$rs = $stmt->fetch(PDO::FETCH_ASSOC);
 				if ($rs) {
 					$user = array(
 						'id' => $rs['id'],
@@ -123,7 +132,7 @@ if (isset($_GET['s'])) {
 				}
 			}
 			break;
-		case "userlist":
+		case "fetchUserList":
 			if (!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
 				$padmin->errorMsg("CSRF 验证失败，请尝试重新登录。");
 			}
@@ -138,15 +147,17 @@ if (isset($_GET['s'])) {
 					<th nowrap>操作</th>
 				</tr>
 				<?php
-				$rs = mysqli_query($pigeon->conn, "SELECT * FROM `users`");
-				while ($rw = mysqli_fetch_row($rs)) {
+				$stmt = $pigeon->conn->prepare("SELECT * FROM `users`");
+				$stmt->execute();
+				$rs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+				foreach ($rs as $rw) {
 					echo "<tr>
-					<td class='t-id'>{$rw[0]}</td>
-					<td nowrap>{$rw[1]}</td>
-					<td nowrap>{$rw[3]}</td>
-					<td nowrap>{$rw[4]}</td>
-					<td nowrap>" . $padmin->accountStatus($rw[9]) . "</td>
-					<td nowrap><a onclick='getUser({$rw[0]})'>[选择]</a></td>
+					<td class='t-id'>{$rw['id']}</td>
+					<td nowrap>{$rw['username']}</td>
+					<td nowrap>{$rw['email']}</td>
+					<td nowrap>{$rw['permission']}</td>
+					<td nowrap>" . $padmin->accountStatus($rw['status']) . "</td>
+					<td nowrap><a onclick='fetchUser({$rw['id']})'>[选择]</a></td>
 				</tr>
 					";
 				}
@@ -154,13 +165,15 @@ if (isset($_GET['s'])) {
 			</tbody>
 <?php
 			break;
-		case "saveuser":
+		case "saveUser":
 			if (!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
 				$padmin->errorMsg("CSRF 验证失败，请尝试重新登录。");
 			}
 			if (isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
-				$uid = mysqli_real_escape_string($pigeon->conn, $_GET['id']);
-				$rs  = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `id`='{$uid}'"));
+				$stmt = $pigeon->conn->prepare("SELECT * FROM `users` WHERE `id`=:id");
+				$stmt->execute(array(':id' => $_GET['id']));
+				$rs = $stmt->fetch(PDO::FETCH_ASSOC);
+				$uid = $rs ? $rs['id'] : false;
 				if ($rs) {
 					if (isset($_POST['username']) && isset($_POST['email']) && isset($_POST['permission']) && isset($_POST['status'])) {
 						if (!preg_match("/^[A-Za-z0-9\_\-]+$/", $_POST['username'])) {
@@ -175,21 +188,28 @@ if (isset($_GET['s'])) {
 						if ($_POST['status'] !== '200' && $_POST['status'] !== '401' && $_POST['status'] !== '403') {
 							$padmin->errorMsg("账号状态不正确。");
 						}
-						$userName   = mysqli_real_escape_string($pigeon->conn, $_POST['username']);
-						$email      = mysqli_real_escape_string($pigeon->conn, $_POST['email']);
-						$permission = mysqli_real_escape_string($pigeon->conn, $_POST['permission']);
-						$status     = mysqli_real_escape_string($pigeon->conn, $_POST['status']);
 						if (isset($_POST['password']) && $_POST['password'] !== '') {
 							if (mb_strlen($_POST['password']) < 5 || mb_strlen($_POST['password']) > 32) {
 								$padmin->errorMsg("密码最少为 5 个字符，最大为 32 个字符。");
 							} else {
 								$password = password_hash($_POST['password'], PASSWORD_BCRYPT);
-								$passwordSQL = ",`password`='{$password}'";
+								$passwordSQL = ",`password`=:password";
 							}
 						} else {
 							$passwordSQL = "";
 						}
-						mysqli_query($pigeon->conn, "UPDATE `users` SET `username`='{$userName}',`email`='{$email}',`permission`='{$permission}',`status`='{$status}'{$passwordSQL} WHERE `id`='{$uid}'");
+						$stmt = $pigeon->conn->prepare("UPDATE `users` SET `username`=:username,`email`=:email,`permission`=:permission,`status`=:status{$passwordSQL} WHERE `id`=:id");
+						$params = array(
+							':username' => $_POST['username'],
+							':email' => $_POST['email'],
+							':permission' => $_POST['permission'],
+							':status' => $_POST['status'],
+							':id' => $uid
+						);
+						if ($passwordSQL !== "") {
+							$params[':password'] = $password;
+						}
+						$stmt->execute($params);
 						echo "Successful";
 					} else {
 						$padmin->errorMsg("请将用户信息填写完整");
@@ -199,29 +219,37 @@ if (isset($_GET['s'])) {
 				}
 			}
 			break;
-		case "deleteuser":
+		case "deleteUser":
 			if (!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
 				$padmin->errorMsg("CSRF 验证失败，请尝试重新登录。");
 			}
 			if (isset($_GET['id']) && preg_match("/^[0-9]{0,10}$/", $_GET['id'])) {
-				$uid = mysqli_real_escape_string($pigeon->conn, $_GET['id']);
-				$rs  = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `id`='{$uid}'"));
+				$stmt = $pigeon->conn->prepare("SELECT * FROM `users` WHERE `id`=:id");
+				$stmt->execute(array(':id' => $_GET['id']));
+				$rs = $stmt->fetch(PDO::FETCH_ASSOC);
 				if ($rs) {
-					mysqli_query($pigeon->conn, "DELETE FROM `users` WHERE `id`='{$rs['id']}'");
+					if ($rs['username'] == $_SESSION['user']) {
+						$padmin->errorMsg("无法删除自己的账号");
+					}
+					if ($rs['permission'] == 'root') {
+						$padmin->errorMsg("无法删除超级管理员账号");
+					}
+					$stmt = $pigeon->conn->prepare("DELETE FROM `users` WHERE `id`=:id");
+					$stmt->execute(array(':id' => $rs['id']));
 					echo "Successful";
 				} else {
 					$padmin->errorMsg("User not found");
 				}
 			}
 			break;
-		case "updatecheck":
+		case "checkUpdate":
 			if (!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
 				$padmin->errorMsg("CSRF 验证失败，请尝试重新登录。");
 			}
 			$update = @file_get_contents("https://cdn.zerodream.net/pigeon/");
 			echo $update;
 			break;
-		case "updateexecute":
+		case "executeUpdate":
 			if (!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
 				$padmin->errorMsg("CSRF 验证失败，请尝试重新登录。");
 			}
@@ -310,6 +338,11 @@ if (isset($_GET['s'])) {
 		#alert_danger {
 			display: none;
 		}
+
+		.logo a {
+			text-decoration: none;
+			color: #333;
+		}
 	</style>
 </head>
 
@@ -317,22 +350,24 @@ if (isset($_GET['s'])) {
 	<div class="container">
 		<div class="row">
 			<div class="col-sm-12 logo">
-				<h2><?php echo $pigeonConfig['sitename']; ?></h2>
-				<p><?php echo $pigeonConfig['description']; ?></p>
-				<hr>
+				<a href="./">
+					<h2>Pigeon Admin</h2>
+				</a>
+				<p>请选择一个用户进行操作</p>
+				<br>
+			</div>
+			<div class="col-sm-9">
 				<div id="alert_success"></div>
 				<div id="alert_danger"></div>
+				<table class="table userlist table-responsive" id="userlist_table"></table>
 			</div>
 			<div class="col-sm-3">
-				<p>
-				<blockquote><b>提示：</b>选择一个用户进行设置</blockquote>
-				</p>
 				<p>用户名</p>
-				<p><input type="text" id="username" class="form-control"></p>
+				<p><input type="text" id="username" class="form-control" autocomplete="new-password"></p>
 				<p>邮箱</p>
-				<p><input type="email" id="email" class="form-control"></p>
+				<p><input type="email" id="email" class="form-control" autocomplete="new-password"></p>
 				<p>密码</p>
-				<p><input type="password" id="password" class="form-control" placeholder="留空则不修改"></p>
+				<p><input type="password" id="password" class="form-control" placeholder="留空则不修改" autocomplete="new-password"></p>
 				<p>权限</p>
 				<p><select id="permission" class="form-control">
 						<option value="user">普通用户</option>
@@ -357,9 +392,6 @@ if (isset($_GET['s'])) {
 				<p>当前最新版本为：<span id="newest_version">检查中...</span></p>
 				<p id="updatemsg"></p>
 			</div>
-			<div class="col-sm-9">
-				<table class="table userlist table-responsive" id="userlist_table"></table>
-			</div>
 			<div class="col-sm-12">
 				<hr>
 				<p>&copy; <?php echo date("Y"); ?> <?php echo $pigeonConfig['sitename']; ?> | Powered by <a href="https://github.com/kasuganosoras/Pigeon" target="_blank">Pigeon</a></p>
@@ -382,14 +414,13 @@ if (isset($_GET['s'])) {
 		var dismissSuccess = '<div class="alert alert-success alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
 		var dismissDanger = '<div class="alert alert-danger alert-dismissable"><button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>';
 
-		function getUser(id) {
+		function fetchUser(id) {
 			var htmlobj = $.ajax({
 				type: 'GET',
-				url: "?s=getuser&id=" + id + "&seid=" + seid,
+				url: `?s=fetchUser&id=${id}&seid=${seid}`,
 				async: true,
 				error: function() {
 					errorMsg("错误：" + htmlobj.responseText);
-					return;
 				},
 				success: function() {
 					try {
@@ -406,7 +437,6 @@ if (isset($_GET['s'])) {
 					} catch (e) {
 						errorMsg("错误：" + e.message);
 					}
-					return;
 				}
 			});
 		}
@@ -418,7 +448,7 @@ if (isset($_GET['s'])) {
 			}
 			var htmlobj = $.ajax({
 				type: 'POST',
-				url: "?s=saveuser&id=" + selectId + "&seid=" + seid,
+				url: `?s=saveUser&id=${selectId}&seid=${seid}`,
 				data: {
 					username: $("#username").val(),
 					password: $("#password").val(),
@@ -429,12 +459,10 @@ if (isset($_GET['s'])) {
 				async: true,
 				error: function() {
 					errorMsg("错误：" + htmlobj.responseText);
-					return;
 				},
 				success: function() {
 					successMsg("用户信息保存成功！");
-					loadUserList();
-					return;
+					fetchUserList();
 				}
 			});
 		}
@@ -447,77 +475,72 @@ if (isset($_GET['s'])) {
 			if (confirm("您确定要删除此用户吗？该操作是不可逆的，请谨慎选择！")) {
 				var htmlobj = $.ajax({
 					type: 'GET',
-					url: "?s=deleteuser&id=" + selectId + "&seid=" + seid,
+					url: `?s=deleteUser&id=${selectId}&seid=${seid}`,
 					async: true,
 					error: function() {
 						errorMsg("错误：" + htmlobj.responseText);
-						return;
 					},
 					success: function() {
 						successMsg("用户删除成功！");
-						loadUserList();
-						return;
+						fetchUserList();
 					}
 				});
 			}
 		}
 
-		function loadUserList() {
+		function fetchUserList(cb) {
 			var htmlobj = $.ajax({
 				type: 'GET',
-				url: "?s=userlist&seid=" + seid,
+				url: "?s=fetchUserList&seid=" + seid,
 				async: true,
 				error: function() {
 					errorMsg("错误：" + htmlobj.responseText);
-					return;
 				},
 				success: function() {
 					userlist_table.innerHTML = htmlobj.responseText;
-					return;
+					if (cb) {
+						cb();
+					}
 				}
 			});
 		}
 
-		function checkNewVersion() {
+		function checkUpdate() {
 			var htmlobj = $.ajax({
 				type: 'GET',
-				url: "?s=updatecheck&seid=" + seid,
+				url: `?s=checkUpdate&seid=${seid}`,
 				async: true,
 				error: function() {
 					errorMsg("错误：" + htmlobj.responseText);
-					return;
 				},
 				success: function() {
 					try {
 						var update = JSON.parse(htmlobj.responseText);
 						newest_version.innerHTML = update.version;
-						if (update.version != version) {
-							updatemsg.innerHTML = "发现新更新：" + update.description + "</p><p><button class='btn btn-primary' onclick='updateExecute()'>立即更新</button>";
+						if (update.version != version && parseInt(update.version.replace(/\./g, "")) > parseInt(version.replace(/\./g, ""))) {
+							updatemsg.innerHTML = "发现新更新：" + update.description + "</p><p><button class='btn btn-primary' onclick='executeUpdate()'>立即更新</button>";
 						} else {
 							updatemsg.innerHTML = "已经是最新版本！";
 						}
 					} catch (e) {
 						errorMsg(e.message);
 					}
-					return;
 				}
 			});
 		}
 
-		function updateExecute() {
+		function executeUpdate() {
 			if (confirm("您确定要更新吗？更新可能会覆盖您对系统自带模板的修改，但是不会影响您的自定义模板，建议您备份好数据后再执行。\n\n更新可能需要较长时间，请耐心等待，不要关闭网页！")) {
 				var htmlobj = $.ajax({
 					type: 'GET',
-					url: "?s=updateexecute&seid=" + seid,
+					url: `?s=executeUpdate&seid=${seid}`,
 					async: true,
 					timeout: 100000,
 					error: function() {
 						errorMsg("错误：" + htmlobj.responseText);
-						return;
 					},
 					success: function() {
 						successMsg(htmlobj.responseText);
-						return;
 					}
 				});
 			}
@@ -526,16 +549,21 @@ if (isset($_GET['s'])) {
 		function successMsg(text) {
 			$("#alert_success").html(dismissSuccess + text + "</div>");
 			$("#alert_success").fadeIn(500);
+			setTimeout(function() {
+				$("#alert_success").fadeOut(500);
+			}, 3000);
 		}
 
 		function errorMsg(text) {
 			$("#alert_danger").html(dismissDanger + text + "</div>");
 			$("#alert_danger").fadeIn(500);
 		}
-		window.onload = function() {
-			loadUserList();
-			checkNewVersion();
-		}
+
+		$(document).ready(function() {
+			fetchUserList(function() {
+				checkUpdate();
+			});
+		});
 	</script>
 </body>
 

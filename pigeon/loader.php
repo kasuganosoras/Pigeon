@@ -25,7 +25,7 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 					$pigeon->before = $beforeTime ? $beforeTime : null;
 				}
 				if (isset($_GET['search']) && is_string($_GET['search']) && $_GET['search'] !== '') {
-					$pigeon->search = mysqli_real_escape_string($pigeon->conn, $_GET['search']);
+					$pigeon->search = $_GET['search'];
 				}
 				$pigeon->isLogin = (isset($_SESSION['user']) && $_SESSION['user'] !== '');
 				$pigeon->isAjax = (isset($_GET['ajax']) && is_string($_GET['ajax']) && $_GET['ajax'] == '1');
@@ -39,6 +39,7 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 		case 'login':
 			$error = "";
 			$alert = "danger";
+			$curTime = time();
 			if (isset($_POST['username'], $_POST['password']) && is_string($_POST['username']) && is_string($_POST['password'])) {
 				if (!isset($_POST['seid']) || $_POST['seid'] !== $_SESSION['seid']) {
 					$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
@@ -48,10 +49,10 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 						$error = "Recaptcha 验证失败。";
 					}
 				}
-				$userName = mysqli_real_escape_string($pigeon->conn, $_POST['username']);
-				$loginIp  = mysqli_real_escape_string($pigeon->conn, $_SERVER['REMOTE_ADDR']);
-				$curTime  = time();
-				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `username`='{$userName}'"));
+				$stmt = $pigeon->conn->prepare("SELECT * FROM `users` WHERE `username`=:username");
+				$stmt->bindParam(":username", $_POST['username']);
+				$stmt->execute();
+				$rs = $stmt->fetch();
 				if ($rs) {
 					if ($rs['status'] !== '200') {
 						switch ($rs['status']) {
@@ -67,7 +68,11 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 					} else {
 						if (password_verify($_POST['password'], $rs['password'])) {
 							if ($error == '') {
-								mysqli_query($pigeon->conn, "UPDATE `users` SET `latest_ip`='{$loginIp}', `latest_time`='{$curTime}' WHERE `id`='{$rs['id']}'");
+								$stmt = $pigeon->conn->prepare("UPDATE `users` SET `latest_ip`=:loginIp, `latest_time`=:curTime WHERE `id`=:id");
+								$stmt->bindParam(":loginIp", $loginIp);
+								$stmt->bindParam(":curTime", $curTime);
+								$stmt->bindParam(":id", $rs['id']);
+								$stmt->execute();
 								$pigeon->updateSessionId();
 								$_SESSION['user']  = $rs['username'];
 								$_SESSION['email'] = $rs['email'];
@@ -79,7 +84,10 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 						}
 					}
 				} else {
-					$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `email`='{$userName}'"));
+					$stmt = $pigeon->conn->prepare("SELECT * FROM `users` WHERE `email`=:email");
+					$stmt->bind_param(":email", $_POST['username']);
+					$stmt->execute();
+					$rs = $stmt->fetch();
 					if ($rs) {
 						if ($rs['status'] !== '200') {
 							switch ($rs['status']) {
@@ -95,7 +103,11 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 						} else {
 							if (password_verify($_POST['password'], $rs['password'])) {
 								if ($error == '') {
-									mysqli_query($pigeon->conn, "UPDATE `users` SET `latest_ip`='{$loginIp}', `latest_time`='{$curTime}' WHERE `id`='{$rs['id']}'");
+									$stmt = $pigeon->conn->prepare("UPDATE `users` SET `latest_ip`=:loginIp, `latest_time`=:curTime WHERE `id`=:id");
+									$stmt->bindParam(":loginIp", $loginIp);
+									$stmt->bindParam(":curTime", $curTime);
+									$stmt->bindParam(":id", $rs['id']);
+									$stmt->execute();
 									$pigeon->updateSessionId();
 									$_SESSION['user']  = $rs['username'];
 									$_SESSION['email'] = $rs['email'];
@@ -118,7 +130,7 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 		case 'register':
 			$error = "";
 			$alert = "danger";
-			if (!$pigeon->config['enable_registe']) {
+			if (!$pigeon->config['enable_register']) {
 				$error = "抱歉，本站暂不开放注册。";
 			}
 			if (isset($_POST['username'], $_POST['password'], $_POST['email'])) {
@@ -139,17 +151,17 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 						$error = "Recaptcha 验证失败。";
 					}
 				}
-				$userName = mysqli_real_escape_string($pigeon->conn, $_POST['username']);
-				$passWord = password_hash($_POST['password'], PASSWORD_BCRYPT);
-				$email    = mysqli_real_escape_string($pigeon->conn, $_POST['email']);
-				$regIp    = mysqli_real_escape_string($pigeon->conn, $_SERVER['REMOTE_ADDR']);
-				$curTime  = time();
-				$token    = md5(sha1($userName . $passWord . $email . mt_rand(0, 99999999) . time()));
-				$rs       = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `username`='{$userName}'"));
+				$stmt = $pigeon->conn->prepare("SELECT * FROM `users` WHERE `username`=:username");
+				$stmt->bindParam(":username", $_POST['username']);
+				$stmt->execute();
+				$rs = $stmt->fetch();
 				if ($rs) {
 					$error = "此用户名已被注册。";
 				}
-				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `email`='{$email}'"));
+				$stmt = $pigeon->conn->prepare("SELECT * FROM `users` WHERE `email`=:email");
+				$stmt->bindParam(":email", $_POST['email']);
+				$stmt->execute();
+				$rs = $stmt->fetch();
 				if ($rs) {
 					$error = "此邮箱已被注册。";
 				}
@@ -163,30 +175,20 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 						$pigeon->sendMail($email, "验证您的 {$pigeon->config['sitename']} 账号", "<p>您好，感谢您注册 {$pigeon->config['sitename']}。</p><p>请点击以下链接验证您的账号：</p><p><a href='{$siteUrl}'>{$siteUrl}</a></p><p>如果以上链接无法点击，请复制到浏览器地址栏中打开。</p><p>如果您没有注册本站账号，请忽略此邮件。</p>");
 						$needVerify = "系统已发送一封邮件到您的邮箱，请点击邮件中的链接完成验证。";
 					}
-					mysqli_query($pigeon->conn, "INSERT INTO `users` (
-						`id`,
-						`username`,
-						`password`,
-						`email`,
-						`permission`,
-						`registe_ip`,
-						`registe_time`,
-						`latest_ip`,
-						`latest_time`,
-						`status`,
-						`token`) VALUES (
-						NULL,
-						'{$userName}',
-						'{$passWord}',
-						'{$email}',
-						'user',
-						'{$regIp}',
-						'{$curTime}',
-						NULL,
-						NULL,
-						'{$userStatus}',
-						'{$token}'
-					)");
+					$passWord  = password_hash($_POST['password'], PASSWORD_BCRYPT);
+					$token     = md5(sha1($userName . $passWord . $email . mt_rand(0, 99999999) . time()));
+					$registeIp = $_SERVER['REMOTE_ADDR'];
+					$email     = $_POST['email'];
+					$userName  = $_POST['username'];
+					$stmt = $pigeon->conn->prepare("INSERT INTO `users` (`id`, `username`, `password`, `email`, `permission`, `registe_ip`, `registe_time`, `latest_ip`, `latest_time`, `status`, `token`) VALUES (NULL, :username, :password, :email, 'user', :registe_ip, :registe_time, NULL, NULL, :status, :token)");
+					$stmt->bindParam(":username", $userName);
+					$stmt->bindParam(":password", $passWord);
+					$stmt->bindParam(":email", $email);
+					$stmt->bindParam(":registe_ip", $registeIp);
+					$stmt->bindParam(":registe_time", time());
+					$stmt->bindParam(":status", $userStatus);
+					$stmt->bindParam(":token", $token);
+					$stmt->execute();
 					$alert = "success";
 					$error = "账号注册成功！{$needVerify}";
 				}
@@ -211,8 +213,7 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 				$apiUser = false;
 				if (isset($_GET['token']) || !isset($_SESSION['user'])) {
 					if (isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
-						$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
-						$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
+						$rs = $pigeon->getUserByToken($_GET['token']);
 						if ($rs) {
 							$_SESSION['user']  = $rs['username'];
 							$_SESSION['email'] = $rs['email'];
@@ -232,15 +233,20 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 				if ($_POST['ispublic'] !== '0' && $_POST['ispublic'] !== '1' && $_POST['ispublic'] !== '2') {
 					$pigeon->Exception("Bad Request");
 				}
-				$isPub   = mysqli_real_escape_string($pigeon->conn, $_POST['ispublic']);
-				$content = mysqli_real_escape_string($pigeon->conn, $_POST['content']);
-				$logUser = mysqli_real_escape_string($pigeon->conn, $_SESSION['user']);
+				$isPub   = $_POST['ispublic'];
+				$content = $_POST['content'];
+				$logUser = $_SESSION['user'];
 				$textLen = mb_strlen($content);
 				$curTime = time();
 				if ($textLen < 1 || $textLen > 1000000) {
 					$pigeon->Exception("最少输入 1 个字符，最大输入 100 万个字符，当前已输入：{$textLen}。");
 				}
-				mysqli_query($pigeon->conn, "INSERT INTO `posts` (`id`, `content`, `author`, `time`, `public`) VALUES (NULL, '{$content}', '{$logUser}', '{$curTime}', '{$isPub}')");
+				$stmt = $pigeon->conn->prepare("INSERT INTO `posts` (`id`, `content`, `author`, `time`, `public`) VALUES (NULL, :content, :author, :time, :public)");
+				$stmt->bindParam(":content", $content);
+				$stmt->bindParam(":author", $logUser);
+				$stmt->bindParam(":time", $curTime);
+				$stmt->bindParam(":public", $isPub);
+				$stmt->execute();
 				echo "Successful";
 			}
 			break;
@@ -249,8 +255,7 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 				$apiUser = false;
 				if (!isset($_SESSION['user'])) {
 					if (isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
-						$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
-						$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
+						$rs = $pigeon->getUserByToken($_GET['token']);
 						if ($rs) {
 							$_SESSION['user']  = $rs['username'];
 							$_SESSION['email'] = $rs['email'];
@@ -270,10 +275,14 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 				if (!$pigeon->isAdmin($_SESSION['user'])) {
 					$pigeon->Exception("请求被拒绝。");
 				}
-				$id = mysqli_real_escape_string($pigeon->conn, $_GET['id']);
-				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `posts` WHERE `id`='{$id}'"));
+				$stmt = $pigeon->conn->prepare("SELECT * FROM `posts` WHERE `id`=:id");
+				$stmt->bindParam(":id", $_GET['id']);
+				$stmt->execute();
+				$rs = $stmt->fetch();
 				if ($rs) {
-					mysqli_query($pigeon->conn, "DELETE FROM `posts` WHERE `id`='{$id}'");
+					$stmt = $pigeon->conn->prepare("DELETE FROM `posts` WHERE `id`=:id");
+					$stmt->bindParam(":id", $_GET['id']);
+					$stmt->execute();
 					echo "Successful";
 				} else {
 					$pigeon->Exception("内容不存在。");
@@ -286,8 +295,7 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 				$apiUser = false;
 				if (!isset($_SESSION['user'])) {
 					if (isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
-						$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
-						$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
+						$rs = $pigeon->getUserByToken($_GET['token']);
 						if ($rs) {
 							$_SESSION['user']  = $rs['username'];
 							$_SESSION['email'] = $rs['email'];
@@ -310,11 +318,15 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 				if ($_GET['newstatus'] !== "0" && $_GET['newstatus'] !== "1" && $_GET['newstatus'] !== "2") {
 					$pigeon->Exception("请求被拒绝。");
 				}
-				$id = mysqli_real_escape_string($pigeon->conn, $_GET['id']);
-				$pb = mysqli_real_escape_string($pigeon->conn, $_GET['newstatus']);
-				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `posts` WHERE `id`='{$_GET['id']}'"));
+				$stmt = $pigeon->conn->prepare("SELECT * FROM `posts` WHERE `id`=:id");
+				$stmt->bindParam(":id", $_GET['id']);
+				$stmt->execute();
+				$rs = $stmt->fetch();
 				if ($rs) {
-					mysqli_query($pigeon->conn, "UPDATE `posts` SET `public`='{$pb}' WHERE `id`='{$id}'");
+					$stmt = $pigeon->conn->prepare("UPDATE `posts` SET `public`=:newstatus WHERE `id`=:id");
+					$stmt->bindParam(":newstatus", $_GET['newstatus']);
+					$stmt->bindParam(":id", $_GET['id']);
+					$stmt->execute();
 					echo "Successful";
 				} else {
 					$pigeon->Exception("内容不存在。");
@@ -323,10 +335,13 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 			break;
 		case "resendmail":
 			if (isset($_GET['user']) && is_string($_GET['user']) && preg_match("/^[A-Za-z0-9\_\-]{0,32}$/", $_GET['user'])) {
-				$alert    = "danger";
-				$error    = "";
-				$userName = mysqli_real_escape_string($pigeon->conn, $_GET['user']);
-				$rs       = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `username`='{$userName}'"));
+				$alert = "danger";
+				$error = "";
+				$userName = $_GET['user'];
+				$stmt = $pigeon->conn->prepare("SELECT * FROM `users` WHERE `username`=:username");
+				$stmt->bindParam(":username", $userName);
+				$stmt->execute();
+				$rs = $stmt->fetch();
 				if ($rs) {
 					if ($rs['status'] !== '401') {
 						$error = "此账号已经通过验证。";
@@ -349,13 +364,14 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 			if (isset($_GET['token']) && is_string($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
 				$alert = "danger";
 				$error = "";
-				$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
-				$rs    = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
+				$rs = $pigeon->getUserByToken($_GET['token']);
 				if ($rs) {
 					if ($rs['status'] !== '401') {
 						$error = "无效的验证链接。";
 					} else {
-						mysqli_query($pigeon->conn, "UPDATE `users` SET `status`='200' WHERE `id`='{$rs['id']}'");
+						$stmt = $pigeon->conn->prepare("UPDATE `users` SET `status`='200' WHERE `id`=:id");
+						$stmt->bindParam(":id", $rs['id']);
+						$stmt->execute();
 						$error = "验证成功，您可以登录了。";
 						$alert = "success";
 					}
@@ -409,8 +425,7 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 			if (isset($_GET['id']) && preg_match("/^[0-9]{1,10}$/", $_GET['id'])) {
 				if (!isset($_SESSION['user'])) {
 					if (isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
-						$token = mysqli_real_escape_string($pigeon->conn, $_GET['token']);
-						$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `users` WHERE `token`='{$token}'"));
+						$rs = $pigeon->getUserByToken($_GET['token']);
 						if ($rs) {
 							$_SESSION['user'] = $rs['user'];
 							$_SESSION['email'] = $rs['email'];
@@ -423,19 +438,23 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 				if ($_POST['ispublic'] !== '0' && $_POST['ispublic'] !== '1' && $_POST['ispublic'] !== '2') {
 					$pigeon->Exception("Bad Request");
 				}
-				$id = mysqli_real_escape_string($pigeon->conn, $_GET['id']);
-				$rs = mysqli_fetch_array(mysqli_query($pigeon->conn, "SELECT * FROM `posts` WHERE `id`='{$id}'"));
+				$stmt = $pigeon->conn->prepare("SELECT * FROM `posts` WHERE `id`=:id");
+				$stmt->bindParam(":id", $_GET['id']);
+				$stmt->execute();
+				$rs = $stmt->fetch();
 				if ($rs) {
 					if ($rs['author'] !== $_SESSION['user'] && !$pigeon->isAdmin($_SESSION['user'])) {
 						$pigeon->Exception("未找到指定的消息内容，该消息已被删除或者您暂时没有权限查看。");
 					}
-					$content = mysqli_real_escape_string($pigeon->conn, $_POST['content']);
-					$public  = mysqli_real_escape_string($pigeon->conn, $_POST['ispublic']);
-					$textLen = mb_strlen($content);
+					$textLen = mb_strlen($_POST['content']);
 					if ($textLen < 1 || $textLen > 1000000) {
 						$pigeon->Exception("最少输入 1 个字符，最大输入 100 万个字符，当前已输入：{$textLen}。");
 					}
-					mysqli_query($pigeon->conn, "UPDATE `posts` SET `content`='{$content}',`public`='{$public}' WHERE `id`='{$id}'");
+					$stmt = $pigeon->conn->prepare("UPDATE `posts` SET `content`=:content, `public`=:public WHERE `id`=:id");
+					$stmt->bindParam(":content", $_POST['content']);
+					$stmt->bindParam(":public", $_POST['ispublic']);
+					$stmt->bindParam(":id", $_GET['id']);
+					$stmt->execute();
 					echo "Successful";
 				} else {
 					$pigeon->Exception("未找到指定的消息内容，该消息已被删除或者您暂时没有权限查看。");
@@ -452,7 +471,7 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 		$pigeon->before = $beforeTime ? $beforeTime : null;
 	}
 	if (isset($_GET['search']) && $_GET['search'] !== '') {
-		$pigeon->search = mysqli_real_escape_string($pigeon->conn, $_GET['search']);
+		$pigeon->search = $_GET['search'];
 	}
 	$pigeon->isAjax = false;
 	$pigeon->isLogin = (isset($_SESSION['user']) && $_SESSION['user'] !== '');

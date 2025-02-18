@@ -5,7 +5,7 @@ class Pigeon
 	public $cacheData;
 	public $writeToCache;
 	public $publicMode = true;
-	public $version = "1.0.181";
+	public $version = "1.0.182";
 
 	/**
 	 *
@@ -20,13 +20,18 @@ class Pigeon
 			include(ROOT . "/pigeon/config.php");
 			$this->config   = $pigeonConfig;
 			$this->gravatar = $this->config['gravatar_mirror'];
-			$this->conn     = @mysqli_connect(
-				$pigeonConfig['mysql']['host'],
+			$this->conn     = new PDO(
+				sprintf(
+					'mysql:host=%s;port=%s;dbname=%s',
+					$pigeonConfig['mysql']['host'],
+					$pigeonConfig['mysql']['port'],
+					$pigeonConfig['mysql']['name']
+				),
 				$pigeonConfig['mysql']['user'],
-				$pigeonConfig['mysql']['pass'],
-				$pigeonConfig['mysql']['name'],
-				$pigeonConfig['mysql']['port']
-			) or die("<h1>500 Internal Error</h1><p>无法连接到数据库，请检查连接设置。</p>");
+				$pigeonConfig['mysql']['pass']
+			);
+			$this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+			$this->conn->exec("SET NAMES 'utf8mb4'");
 		}
 	}
 
@@ -137,16 +142,27 @@ class Pigeon
 
 		// 一大堆 SQL 语句，不管这么多了写就是了
 		$beforeSql = $this->before ? " AND time <= {$this->before}" : "";
-		$searchSql = $this->search ? " AND (POSITION('{$this->search}' IN `content`) OR POSITION('{$this->search}' IN `author`))" : "";
-		// $userSql   = $this->isLogin ? ($isAdmin ? " AND (`public`='0' OR `public`='1' OR `public`='2')" : " AND (`public`='0' OR `public`='1' OR (`public`='2' AND `author`='{$_SESSION['user']}'))") : " AND `public`='0'";
+		$searchSql = $this->search ? " AND (POSITION(:search IN `content`) OR POSITION(:search IN `author`))" : "";
 		$userSql2  = $this->isLogin ? ($isAdmin ? " WHERE (`public`='0' OR `public`='1' OR `public`='2')" : " WHERE (`public`='0' OR `public`='1' OR (`public`='2' AND `author`='{$_SESSION['user']}'))") : " WHERE `public`='0'";
 
 		// 到这里开始查询
 		if (!empty($userName)) {
-			$username = mysqli_real_escape_string($this->conn, $userName);
-			$rs = mysqli_query($this->conn, "SELECT * FROM `posts` WHERE `author`='{$username}'{$beforeSql}{$searchSql} ORDER BY `id` DESC LIMIT {$sPage},10");
+			$stmt = $this->conn->prepare("SELECT * FROM `posts` WHERE `author`=:username{$beforeSql}{$searchSql} ORDER BY `id` DESC LIMIT :sPage,10");
+			$stmt->bindParam(':username', $userName);
+			$stmt->bindParam(':sPage', $sPage, PDO::PARAM_INT);
+			if ($this->search) {
+				$stmt->bindParam(':search', $this->search);
+			}
+			$stmt->execute();
+			$rs = $stmt->fetchAll();
 		} else {
-			$rs = mysqli_query($this->conn, "SELECT * FROM `posts`{$userSql2} {$beforeSql}{$searchSql} ORDER BY `id` DESC LIMIT {$sPage},10");
+			$stmt = $this->conn->prepare("SELECT * FROM `posts`{$userSql2} {$beforeSql}{$searchSql} ORDER BY `id` DESC LIMIT :sPage,10");
+			$stmt->bindParam(':sPage', $sPage, PDO::PARAM_INT);
+			if ($this->search) {
+				$stmt->bindParam(':search', $this->search);
+			}
+			$stmt->execute();
+			$rs = $stmt->fetchAll();
 		}
 		if ($displayHtml) {
 			$i      = 0;
@@ -158,9 +174,9 @@ class Pigeon
 			} elseif ($loginUser !== "") {
 				$manage = "<span class='hoverdisplay'>&nbsp;&nbsp;|&nbsp;&nbsp;<a style='cursor: pointer;' onclick='edit({id})'>编辑</a></span>";
 			}
-			while ($rw = mysqli_fetch_row($rs)) {
-				$ids        .= "{$rw[0]},";
-				$tempIsAdmin = $this->isAdmin($rw[2]);
+			foreach ($rs as $rw) {
+				$ids        .= "{$rw['id']},";
+				$tempIsAdmin = $this->isAdmin($rw['author']);
 				$i++;
 				if ($this->config['enable_safemode']) {
 					if ($this->config['enable_foruser']) {
@@ -173,20 +189,20 @@ class Pigeon
 						$markdown->setSafeMode(true);
 					}
 				}
-				if ($rw[4] == "1" && !$this->isLogin) {
+				if ($rw['public'] == "1" && !$this->isLogin) {
 					continue;
 				}
-				if ($rw[4] == "2" && $loginUser !== $rw[2]) {
+				if ($rw['public'] == "2" && $loginUser !== $rw['author']) {
 					if (!$isAdmin) {
 						continue;
 					}
 				}
-				$sManage  = ($rw[2] == $loginUser || $isAdmin) ? $manage : "";
-				$pStatus  = $rw[4] == '2' ? "&nbsp;&nbsp;<code>仅自己可见</code>" : "";
+				$sManage  = ($rw['author'] == $loginUser || $isAdmin) ? $manage : "";
+				$pStatus  = $rw['public'] == '2' ? "&nbsp;&nbsp;<code>仅自己可见</code>" : "";
 				$gravatar = $this->gravatar;
-				$viewLink = $this->config['enable_rewrite'] ? "/msg/{$rw[0]}" : "?s=msg&id={$rw[0]}";
-				$html    .= "<tr><td class='headimg'><img src='" . $gravatar . md5($this->getUserInfo($rw[2])['email']) . "?s=64'</td><td class='thread'><p><small>{$rw[2]} 发表于" . $this->getDateFormat($rw[3]) . "&nbsp;&nbsp;<a href='{$viewLink}' target='_blank'><i class='fa fa-external-link'></i></a>" . $pStatus . str_replace("{id}", $rw[0], $sManage) . "</small></p>";
-				$html    .= "<div class='message'>" . $markdown->text($rw[1]) . "</div></td></tr>";
+				$viewLink = $this->config['enable_rewrite'] ? "/msg/{$rw['id']}" : "?s=msg&id={$rw['id']}";
+				$html    .= "<tr><td class='headimg'><img src='" . $gravatar . md5($this->getUserInfo($rw['author'])['email']) . "?s=64'</td><td class='thread'><p><small>{$rw['author']} 发表于" . $this->getDateFormat($rw['time']) . "&nbsp;&nbsp;<a href='{$viewLink}' target='_blank'><i class='fa fa-external-link'></i></a>" . $pStatus . str_replace("{id}", $rw['id'], $sManage) . "</small></p>";
+				$html    .= "<div class='message'>" . $markdown->text($rw['content']) . "</div></td></tr>";
 			}
 			if ($i == 0) {
 				if (!$this->isAjax) {
@@ -223,8 +239,10 @@ class Pigeon
 		$manage = "";
 		$markdown = new Parsedown();
 		$markdown->setBreaksEnabled(false);
-		$id = mysqli_real_escape_string($this->conn, $id);
-		$rs = mysqli_fetch_array(mysqli_query($this->conn, "SELECT * FROM `posts` WHERE `id`='{$id}'"));
+		$stmt = $this->conn->prepare("SELECT * FROM `posts` WHERE `id`=:id");
+		$stmt->bindParam(':id', $id);
+		$stmt->execute();
+		$rs = $stmt->fetch();
 		$this->isLogin = (isset($_SESSION['user']) && $_SESSION['user'] !== '');
 		if ($rs) {
 			$html = "<div id='pagecontent'><table style='width: 100%;'>";
@@ -276,8 +294,10 @@ class Pigeon
 		if (!$this->conn) {
 			return false;
 		}
-		$id            = mysqli_real_escape_string($this->conn, $id);
-		$rs            = mysqli_fetch_array(mysqli_query($this->conn, "SELECT * FROM `posts` WHERE `id`='{$id}'"));
+		$stmt = $this->conn->prepare("SELECT * FROM `posts` WHERE `id`=:id");
+		$stmt->bindParam(':id', $id);
+		$stmt->execute();
+		$rs = $stmt->fetch();
 		$this->isLogin = (isset($_SESSION['user']) && $_SESSION['user'] !== '');
 		$loginUser     = isset($_SESSION['user']) ? $_SESSION['user'] : "";
 		$isAdmin       = $this->isAdmin($loginUser);
@@ -314,8 +334,34 @@ class Pigeon
 		if (empty($userName)) {
 			return false;
 		}
-		$userName = mysqli_real_escape_string($this->conn, $userName);
-		$rs       = mysqli_fetch_array(mysqli_query($this->conn, "SELECT * FROM `users` WHERE `username`='{$userName}'"));
+		$stmt = $this->conn->prepare("SELECT * FROM `users` WHERE `username`=:username");
+		$stmt->bindParam(':username', $userName);
+		$stmt->execute();
+		$rs = $stmt->fetch();
+		if ($rs) {
+			unset($rs['password']);
+			return $rs;
+		}
+		return false;
+	}
+
+	/**
+	 *
+	 *	根据 Token 获取用户信息
+	 *
+	 */
+	public function getUserByToken($token)
+	{
+		if (!$this->conn) {
+			return false;
+		}
+		if (empty($token)) {
+			return false;
+		}
+		$stmt = $this->conn->prepare("SELECT * FROM `users` WHERE `token`=:token");
+		$stmt->bindParam(':token', $token);
+		$stmt->execute();
+		$rs = $stmt->fetch();
 		if ($rs) {
 			unset($rs['password']);
 			return $rs;
@@ -336,8 +382,10 @@ class Pigeon
 		if (empty($userName)) {
 			return false;
 		}
-		$userName = mysqli_real_escape_string($this->conn, $userName);
-		$rs = mysqli_fetch_array(mysqli_query($this->conn, "SELECT * FROM `users` WHERE `username`='{$userName}'"));
+		$stmt = $this->conn->prepare("SELECT * FROM `users` WHERE `username`=:username");
+		$stmt->bindParam(':username', $userName);
+		$stmt->execute();
+		$rs = $stmt->fetch();
 		return $rs ? ($rs['permission'] == 'root' || $rs['permission'] == 'admin') : false;
 	}
 

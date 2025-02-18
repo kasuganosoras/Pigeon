@@ -39,22 +39,14 @@ Pigeon 的安装配置非常简单，只需要简单三行命令以及一些配�
 
 > 建议始终通过 clone 获取最新的代码，因为一些小的修复我可能会懒得发 Release。
 
-首先将项目拉取到本地
+首先将项目拉取到本地网站目录下
 
-```
-git clone https://github.com/kasuganosoras/Pigeon
-```
-
-然后
-
-```
-cd Pigeon/
-php install.php
+```bash
+cd /path/to/your/webroot
+git clone https://github.com/kasuganosoras/Pigeon .
 ```
 
-根据提示进行配置即可。
-
-安装程序是没有界面的，请通过命令行执行 `install.php`，而不是通过网页访问它。
+然后访问 `http://你的域名/install.php` 开始安装。
 
 > 如需手动安装（不使用安装程序），请 [点击这里阅读安装方法](https://github.com/kasuganosoras/Pigeon/wiki/Install#%E6%89%8B%E5%8A%A8%E5%AE%89%E8%A3%85-pigeon)
 
@@ -65,7 +57,7 @@ php install.php
 - [x] 完善的 API 系统
 - [ ] 支持对接其他平台
 
-## 关于 Admin Console
+## 管理员后台
 
 管理员后台的地址是：`/admin.php`
 
@@ -75,7 +67,7 @@ php install.php
 
 ## 开源协议
 
-本项目使用 MIT 协议开源，可以用于商业使用
+本项目使用 MIT 协议开源，您可以在遵守协议的情况下自由使用本项目。
 
 ## 捐助开发者
 
