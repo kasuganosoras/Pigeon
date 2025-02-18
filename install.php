@@ -195,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 						JsonPrint(false, '错误，请重新运行安装程序。');
 					}
 				}
-				$smtpHost = sprintf('%s%s', $_SESSION['install']['data']['smtp_host'], $_SESSION['install']['data']['smtp_ssl'] == 'y' ? ':ssl' : '');
+				$smtpHost = sprintf('%s%s', $_SESSION['install']['data']['smtp_ssl'] == 'y' ? 'ssl://' : '', $_SESSION['install']['data']['smtp_host']);
 				$template = file_get_contents('pigeon/config-template.php');
 				$template = str_replace('{DB_HOST}', EscapeConfig($_SESSION['install']['data']['db_host']), $template);
 				$template = str_replace('{DB_PORT}', EscapeConfig($_SESSION['install']['data']['db_port']), $template);
