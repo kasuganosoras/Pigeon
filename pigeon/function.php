@@ -2,10 +2,17 @@
 class Pigeon
 {
 
+	public $config;
+	public $gravatar;
+	public $conn;
+	public $before;
+	public $search;
+	public $isAjax;
+	public $isLogin;
 	public $cacheData;
 	public $writeToCache;
 	public $publicMode = true;
-	public $version = "1.0.200";
+	public $version = "1.0.201";
 
 	/**
 	 *
@@ -435,7 +442,7 @@ class Pigeon
 		if (function_exists('com_create_guid')) {
 			return com_create_guid();
 		} else {
-			mt_srand((float)microtime() * 10000);
+			mt_srand((int)((float)microtime() * 10000));
 			$charId = strtoupper(md5(uniqid(rand(), true)));
 			$uuid = substr($charId, 0, 8) . "-"
 				. substr($charId, 8, 4) . "-"
