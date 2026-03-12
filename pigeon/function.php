@@ -5,7 +5,7 @@ class Pigeon
 	public $cacheData;
 	public $writeToCache;
 	public $publicMode = true;
-	public $version = "1.0.182";
+	public $version = "1.0.200";
 
 	/**
 	 *
@@ -105,7 +105,7 @@ class Pigeon
 			)
 		);
 		$context = stream_context_create($options);
-		$result = file_get_contents('https://recaptcha.net/recaptcha/api/siteverify', false, $context);
+		$result = @file_get_contents('https://recaptcha.net/recaptcha/api/siteverify', false, $context);
 		$json = json_decode($result, true);
 		return $json ? $json['success'] : false;
 	}

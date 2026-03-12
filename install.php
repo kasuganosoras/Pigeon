@@ -211,6 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 				$template = str_replace('{SMTP_NAME}', EscapeConfig($_SESSION['install']['data']['smtp_mail']), $template);
 				$template = str_replace('{SITENAME}', EscapeConfig($_SESSION['install']['data']['sitename']), $template);
 				$template = str_replace('{DESCRIPTION}', EscapeConfig($_SESSION['install']['data']['description']), $template);
+				$template = str_replace('{SITE_DOMAIN}', EscapeConfig($_SERVER['HTTP_HOST']), $template);
 				$template = str_replace('{ENABLE_REWRITE}', $_SESSION['install']['data']['enable_rewrite'] == 'y' ? 'true' : 'false', $template);
 				$template = str_replace('{RECAPTCHA_KEY}', EscapeConfig($_SESSION['install']['data']['captcha_key']), $template);
 				$template = str_replace('{RECAPTCHA_KEY_POST}', EscapeConfig($_SESSION['install']['data']['captcha_post_key']), $template);
@@ -265,7 +266,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body>
 	<div class="container mt-5">
 		<h1 class="text-center">Pigeon</h1>
-		<div class="row mt-5">
+		<div class="mt-5 row">
 			<div class="col-3">
 				<ul class="list-group">
 					<li class="list-group-item active" data-step="0">欢迎</li>
@@ -284,22 +285,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 					<p>在开始之前，请确保您已经创建了一个数据库，并且拥有数据库的访问权限。</p>
 					<p>有关 Pigeon 的更多信息，请访问 <a href="https://github.com/kasuganosoras/Pigeon" target="_blank">GitHub</a>。</p>
 					<div class="text-center">
-						<button type="button" class="btn btn-primary w-50 mt-5 set-step" data-set-step="1">下一步</button>
+						<button type="button" class="mt-5 btn btn-primary w-50 set-step" data-set-step="1">下一步</button>
 					</div>
 				</form>
 				<!-- 站点配置页面 -->
 				<form id="install-step-1" class="install-form">
 					<div class="row">
 						<!-- 第一行：数据库地址和端口 -->
-						<div class="col-md-4 mb-3">
+						<div class="mb-3 col-md-4">
 							<label for="db_host" class="form-label">数据库地址</label>
 							<input type="text" class="form-control" id="db_host" value="localhost" required>
 						</div>
-						<div class="col-md-4 mb-3">
+						<div class="mb-3 col-md-4">
 							<label for="db_port" class="form-label">数据库端口</label>
 							<input type="text" class="form-control" id="db_port" value="3306" required>
 						</div>
-						<div class="col-md-4 mb-3">
+						<div class="mb-3 col-md-4">
 							<label for="db_name" class="form-label">数据库名称</label>
 							<input type="text" class="form-control" id="db_name" value="pigeon" required>
 						</div>
@@ -307,33 +308,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 					<div class="row">
 						<!-- 第二行：数据库账号和密码 -->
-						<div class="col-md-6 mb-3">
+						<div class="mb-3 col-md-6">
 							<label for="db_user" class="form-label">数据库账号</label>
 							<input type="text" class="form-control" id="db_user" value="root" required>
 						</div>
-						<div class="col-md-6 mb-3">
+						<div class="mb-3 col-md-6">
 							<label for="db_pass" class="form-label">数据库密码</label>
 							<input type="password" class="form-control" id="db_pass" value="root" required>
 						</div>
 					</div>
 
 					<div class="text-center">
-						<button type="button" class="btn btn-primary w-50 mt-5 set-step" data-set-step="2">下一步</button>
+						<button type="button" class="mt-5 btn btn-primary w-50 set-step" data-set-step="2">下一步</button>
 					</div>
 				</form>
 
 				<form id="install-step-2" class="install-form">
 					<div class="row">
 						<!-- 第一行：站点名称和站点介绍 -->
-						<div class="col-md-4 mb-3">
+						<div class="mb-3 col-md-4">
 							<label for="sitename" class="form-label">站点名称</label>
 							<input type="text" class="form-control" id="sitename" value="Pigeon" required>
 						</div>
-						<div class="col-md-4 mb-3">
+						<div class="mb-3 col-md-4">
 							<label for="description" class="form-label">站点介绍</label>
 							<input type="text" class="form-control" id="description" value="咕咕咕，咕咕咕咕咕？" required>
 						</div>
-						<div class="col-md-4 mb-3">
+						<div class="mb-3 col-md-4">
 							<label for="enable_rewrite" class="form-label">是否启用伪静态</label>
 							<select class="form-select" id="enable_rewrite">
 								<option value="y">是</option>
@@ -344,36 +345,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 					<div class="row">
 						<!-- 管理员账号 -->
-						<div class="col-md-4 mb-3">
+						<div class="mb-3 col-md-4">
 							<label for="admin_user" class="form-label">管理员账号</label>
 							<input type="text" class="form-control" id="admin_user" value="Admin" required>
 						</div>
-						<div class="col-md-4 mb-3">
+						<div class="mb-3 col-md-4">
 							<label for="admin_pass" class="form-label">管理员密码</label>
 							<input type="password" class="form-control" id="admin_pass" required>
 						</div>
-						<div class="col-md-4 mb-3">
+						<div class="mb-3 col-md-4">
 							<label for="admin_email" class="form-label">管理员邮箱</label>
 							<input type="email" class="form-control" id="admin_email" value="admin@example.com" required>
 						</div>
 					</div>
 
 					<div class="text-center">
-						<button type="button" class="btn btn-primary w-50 mt-5 set-step" data-set-step="3">下一步</button>
+						<button type="button" class="mt-5 btn btn-primary w-50 set-step" data-set-step="3">下一步</button>
 					</div>
 				</form>
 				<!-- 注册配置页面 -->
 				<form id="install-step-3" class="install-form">
 					<div class="row">
 						<!-- 第一行：是否启用注册功能 -->
-						<div class="col-md-6 mb-3">
+						<div class="mb-3 col-md-6">
 							<label for="enable_register" class="form-label">是否启用注册功能</label>
 							<select class="form-select" id="enable_register"data-switch="enable_smtp,smtp_host,smtp_port,smtp_user,smtp_pass,smtp_mail,smtp_ssl">
 								<option value="y">是</option>
 								<option value="n">否</option>
 							</select>
 						</div>
-						<div class="col-md-6 mb-3">
+						<div class="mb-3 col-md-6">
 							<label for="enable_smtp" class="form-label">是否启用注册邮箱验证</label>
 							<select class="form-select" id="enable_smtp" data-dep="enable_register" data-switch="smtp_host,smtp_port,smtp_user,smtp_pass,smtp_mail,smtp_ssl">
 								<option value="y">是</option>
@@ -383,31 +384,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 					</div>
 					<div class="row">
 						<!-- 第二行：SMTP 配置 -->
-						<div class="col-md-6 mb-3">
+						<div class="mb-3 col-md-6">
 							<label for="smtp_host" class="form-label">SMTP 地址</label>
 							<input type="text" class="form-control" id="smtp_host" value="localhost">
 						</div>
-						<div class="col-md-6 mb-3">
+						<div class="mb-3 col-md-6">
 							<label for="smtp_port" class="form-label">SMTP 端口</label>
 							<input type="text" class="form-control" id="smtp_port" value="25">
 						</div>
 					</div>
 					<div class="row">
-						<div class="col-md-6 mb-3">
+						<div class="mb-3 col-md-6">
 							<label for="smtp_user" class="form-label">SMTP 账号</label>
 							<input type="text" class="form-control" id="smtp_user" value="root">
 						</div>
-						<div class="col-md-6 mb-3">
+						<div class="mb-3 col-md-6">
 							<label for="smtp_pass" class="form-label">SMTP 密码</label>
 							<input type="password" class="form-control" id="smtp_pass" value="123456789">
 						</div>
 					</div>
 					<div class="row">
-						<div class="col-md-6 mb-3">
+						<div class="mb-3 col-md-6">
 							<label for="smtp_mail" class="form-label">SMTP 邮箱</label>
 							<input type="email" class="form-control" id="smtp_mail" value="noreply@example.com">
 						</div>
-						<div class="col-md-6 mb-3">
+						<div class="mb-3 col-md-6">
 							<label for="smtp_name" class="form-label">SMTP SSL</label>
 							<select class="form-select" id="smtp_ssl">
 								<option value="y">是</option>
@@ -416,7 +417,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 						</div>
 					</div>
 					<div class="text-center">
-						<button type="button" class="btn btn-primary w-50 mt-5 set-step" data-set-step="4">下一步</button>
+						<button type="button" class="mt-5 btn btn-primary w-50 set-step" data-set-step="4">下一步</button>
 					</div>
 				</form>
 
@@ -424,24 +425,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 				<form id="install-step-4" class="install-form">
 					<div class="row">
 						<!-- 第一行：是否启用谷歌验证码 -->
-						<div class="col-md-6 mb-3">
+						<div class="mb-3 col-md-6">
 							<label for="enable_captcha" class="form-label">是否启用谷歌验证码</label>
 							<select class="form-select" id="enable_captcha" data-switch="captcha_key,captcha_post_key">
 								<option value="y">是</option>
 								<option value="n">否</option>
 							</select>
 						</div>
-						<div class="col-md-6 mb-3">
+						<div class="mb-3 col-md-6">
 							<label for="captcha_key" class="form-label">Recaptcha 站点秘钥</label>
 							<input type="text" class="form-control" id="captcha_key">
 						</div>
-						<div class="col-md-6 mb-3">
+						<div class="mb-3 col-md-6">
 							<label for="captcha_post_key" class="form-label">Recaptcha 服务器秘钥</label>
 							<input type="text" class="form-control" id="captcha_post_key">
 						</div>
 					</div>
 					<div class="text-center">
-						<button type="button" class="btn btn-primary w-50 mt-5 set-step" data-set-step="5">下一步</button>
+						<button type="button" class="mt-5 btn btn-primary w-50 set-step" data-set-step="5">下一步</button>
 					</div>
 				</form>
 
@@ -474,7 +475,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 						</ul>
 					</div>
 					<div class="text-center">
-						<button type="button" class="btn btn-primary w-50 mt-5 set-step" data-set-step="6">下一步</button>
+						<button type="button" class="mt-5 btn btn-primary w-50 set-step" data-set-step="6">下一步</button>
 					</div>
 				</form>
 
@@ -483,7 +484,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 					<p>安装完成，感谢您使用 Pigeon。</p>
 					<p>请删除 install_web.php 文件以确保安全。</p>
 					<div class="text-center">
-						<button type="button" class="btn btn-primary w-50 mt-5" onclick="location.href = '../'">访问站点</button>
+						<button type="button" class="mt-5 btn btn-primary w-50" onclick="location.href = '../'">访问站点</button>
 					</div>
 				</div>
 			</div>

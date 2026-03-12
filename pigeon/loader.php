@@ -103,6 +103,7 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 						} else {
 							if (password_verify($_POST['password'], $rs['password'])) {
 								if ($error == '') {
+									$loginIp = $_SERVER['REMOTE_ADDR'];
 									$stmt = $pigeon->conn->prepare("UPDATE `users` SET `latest_ip`=:loginIp, `latest_time`=:curTime WHERE `id`=:id");
 									$stmt->bindParam(":loginIp", $loginIp);
 									$stmt->bindParam(":curTime", $curTime);
@@ -166,20 +167,15 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 					$error = "此邮箱已被注册。";
 				}
 				if ($error == '') {
-					$userStatus = '200';
-					$needVerify = '';
-					if ($pigeon->config['smtp']['enable']) {
-						$userStatus = '401';
-						$httpType   = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) ? 'https://' : 'http://';
-						$siteUrl    = "{$httpType}{$_SERVER['HTTP_HOST']}/?s=checkmail&token={$token}";
-						$pigeon->sendMail($email, "验证您的 {$pigeon->config['sitename']} 账号", "<p>您好，感谢您注册 {$pigeon->config['sitename']}。</p><p>请点击以下链接验证您的账号：</p><p><a href='{$siteUrl}'>{$siteUrl}</a></p><p>如果以上链接无法点击，请复制到浏览器地址栏中打开。</p><p>如果您没有注册本站账号，请忽略此邮件。</p>");
-						$needVerify = "系统已发送一封邮件到您的邮箱，请点击邮件中的链接完成验证。";
-					}
-					$passWord  = password_hash($_POST['password'], PASSWORD_BCRYPT);
-					$token     = md5(sha1($userName . $passWord . $email . mt_rand(0, 99999999) . time()));
-					$registeIp = $_SERVER['REMOTE_ADDR'];
 					$email     = $_POST['email'];
 					$userName  = $_POST['username'];
+					$passWord  = password_hash($_POST['password'], PASSWORD_BCRYPT);
+					$registeIp = $_SERVER['REMOTE_ADDR'];
+					$userStatus = '200';
+					if ($pigeon->config['smtp']['enable']) {
+						$userStatus = '401';
+					}
+					$token = md5(sha1($userName . $passWord . $email . mt_rand(0, 99999999) . time()));
 					$stmt = $pigeon->conn->prepare("INSERT INTO `users` (`id`, `username`, `password`, `email`, `permission`, `registe_ip`, `registe_time`, `latest_ip`, `latest_time`, `status`, `token`) VALUES (NULL, :username, :password, :email, 'user', :registe_ip, :registe_time, NULL, NULL, :status, :token)");
 					$stmt->bindParam(":username", $userName);
 					$stmt->bindParam(":password", $passWord);
@@ -189,6 +185,13 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 					$stmt->bindParam(":status", $userStatus);
 					$stmt->bindParam(":token", $token);
 					$stmt->execute();
+					$needVerify = "";
+					if ($pigeon->config['smtp']['enable']) {
+						$httpType = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) ? 'https://' : 'http://';
+						$siteUrl = "{$httpType}{$pigeon->config['site_domain']}/?s=checkmail&token={$token}";
+						$pigeon->sendMail($email, "验证您的 {$pigeon->config['sitename']} 账号", "..."); 
+						$needVerify = "系统已发送一封邮件到您的邮箱，请点击邮件中的链接完成验证。";
+					}
 					$alert = "success";
 					$error = "账号注册成功！{$needVerify}";
 				}
@@ -347,7 +350,7 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 						$error = "此账号已经通过验证。";
 					} else {
 						$httpType = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')) ? 'https://' : 'http://';
-						$siteUrl  = "{$httpType}{$_SERVER['HTTP_HOST']}/?s=checkmail&token={$rs['token']}";
+						$siteUrl  = "{$httpType}{$pigeon->config['site_domain']}/?s=checkmail&token={$rs['token']}";
 						$pigeon->sendMail($rs['email'], "验证您的 {$pigeon->config['sitename']} 账号", "<p>您好，感谢您注册 {$pigeon->config['sitename']}。</p><p>请点击以下链接验证您的账号：</p><p><a href='{$siteUrl}'>{$siteUrl}</a></p><p>如果以上链接无法点击，请复制到浏览器地址栏中打开。</p><p>如果您没有注册本站账号，请忽略此邮件。</p>");
 						$error = "系统已发送一封邮件到您的邮箱，请点击邮件中的链接完成验证。";
 						$alert = "success";
@@ -423,17 +426,25 @@ if (isset($_GET['s']) && is_string($_GET['s'])) {
 			break;
 		case "editpost":
 			if (isset($_GET['id']) && preg_match("/^[0-9]{1,10}$/", $_GET['id'])) {
-				if (!isset($_SESSION['user'])) {
+				$apiUser = false;
+				if (isset($_GET['token']) || !isset($_SESSION['user'])) {
 					if (isset($_GET['token']) && preg_match("/^[A-Za-z0-9]{32}$/", $_GET['token'])) {
 						$rs = $pigeon->getUserByToken($_GET['token']);
 						if ($rs) {
-							$_SESSION['user'] = $rs['user'];
+							$_SESSION['user']  = $rs['username'];
 							$_SESSION['email'] = $rs['email'];
+							$apiUser = true;
 						} else {
 							$pigeon->Exception("Permission denied");
 						}
+					} else {
+						$pigeon->Exception("请先登录。");
 					}
-					$pigeon->Exception("请先登录。");
+				}
+				if (!$apiUser) {
+					if (!isset($_GET['seid']) || $_GET['seid'] !== $_SESSION['seid']) {
+						$pigeon->Exception("CSRF 验证失败，请尝试重新登录。");
+					}
 				}
 				if ($_POST['ispublic'] !== '0' && $_POST['ispublic'] !== '1' && $_POST['ispublic'] !== '2') {
 					$pigeon->Exception("Bad Request");

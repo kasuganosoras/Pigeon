@@ -26,6 +26,8 @@ $pigeonConfig = [
 	'sitename'           => '{SITENAME}',
 	// 站点介绍（显示在网页上）
 	'description'        => '{DESCRIPTION}',
+	// 站点域名（用于生成链接）
+	'site_domain'        => '{SITE_DOMAIN}',
 	// 允许注册（true/false）
 	'enable_register'    => {ENABLE_REGISTER},
 	// 开启安全模式（开启后将不会解析 Markdown 里的 HTML）
